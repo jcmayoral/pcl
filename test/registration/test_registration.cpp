@@ -37,7 +37,7 @@
 *
 */
 
-#include <gtest/gtest.h>
+#include <pcl/test/gtest.h>
 
 #include <pcl/point_types.h>
 #include <pcl/io/pcd_io.h>
@@ -119,10 +119,10 @@ TEST (PCL, findFeatureCorrespondences)
       feature3.points.push_back (f);
     }
   }
-  feature0.width = static_cast<uint32_t> (feature0.points.size ());
-  feature1.width = static_cast<uint32_t> (feature1.points.size ());
-  feature2.width = static_cast<uint32_t> (feature2.points.size ());
-  feature3.width = static_cast<uint32_t> (feature3.points.size ());
+  feature0.width = static_cast<std::uint32_t> (feature0.points.size ());
+  feature1.width = static_cast<std::uint32_t> (feature1.points.size ());
+  feature2.width = static_cast<std::uint32_t> (feature2.points.size ());
+  feature3.width = static_cast<std::uint32_t> (feature3.points.size ());
 
   KdTreeFLANN<FeatureT> tree;
 
@@ -147,11 +147,53 @@ TEST (PCL, findFeatureCorrespondences)
 
   ASSERT_EQ ((int)indices.size (), 10);
   const int correct_values[] = {1197, 1248, 1249, 1299, 1300, 1301, 1302, 1350, 1351, 1401};
-  for (size_t i = 0; i < indices.size (); ++i)
+  for (std::size_t i = 0; i < indices.size (); ++i)
   {
     EXPECT_EQ (indices[i], correct_values[i]);
   }
 */
+}
+
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// This test if the ICP algorithm can successfully find the transformation of a cloud that has been
+// moved 0.7 in x direction.
+// It indirectly test the KDTree doesn't get an empty input cloud, see #3624
+// It is more or less a copy of https://github.com/PointCloudLibrary/pcl/blob/cc7fe363c6463a0abc617b1e17e94ab4bd4169ef/doc/tutorials/content/sources/iterative_closest_point/iterative_closest_point.cpp
+TEST(PCL, ICP_translated)
+{
+  pcl::PointCloud<pcl::PointXYZ>::Ptr cloud_in(new pcl::PointCloud<pcl::PointXYZ>(5,1));
+  pcl::PointCloud<pcl::PointXYZ>::Ptr cloud_out(new pcl::PointCloud<pcl::PointXYZ>);
+
+  // Fill in the CloudIn data
+  for (auto& point : *cloud_in)
+  {
+    point.x = 1024 * rand() / (RAND_MAX + 1.0f);
+    point.y = 1024 * rand() / (RAND_MAX + 1.0f);
+    point.z = 1024 * rand() / (RAND_MAX + 1.0f);
+  }
+
+  *cloud_out = *cloud_in;
+
+  for (auto& point : *cloud_out)
+    point.x += 0.7f;
+
+  pcl::IterativeClosestPoint<pcl::PointXYZ, pcl::PointXYZ> icp;
+  icp.setInputSource(cloud_in);
+  icp.setInputTarget(cloud_out);
+
+  pcl::PointCloud<pcl::PointXYZ> Final;
+  icp.align(Final);
+
+  // Check that we have sucessfully converged
+  ASSERT_EQ(icp.hasConverged(), true);
+
+  // Test that the fitness score is below acceptable threshold
+  EXPECT_LT(icp.getFitnessScore(), 1e-6);
+
+  // Ensure that the translation found is within acceptable threshold.
+  EXPECT_NEAR(icp.getFinalTransformation()(0, 3), 0.7, 2e-3);
+  EXPECT_NEAR(icp.getFinalTransformation()(1, 3), 0.0, 2e-3);
+  EXPECT_NEAR(icp.getFinalTransformation()(2, 3), 0.0, 2e-3);
 }
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -169,26 +211,37 @@ TEST (PCL, IterativeClosestPoint)
   reg.align (cloud_reg);
   EXPECT_EQ (int (cloud_reg.points.size ()), int (cloud_source.points.size ()));
 
-  //Eigen::Matrix4f transformation = reg.getFinalTransformation ();
-//  EXPECT_NEAR (transformation (0, 0), 0.8806,  1e-3);
-//  EXPECT_NEAR (transformation (0, 1), 0.036481287330389023, 1e-2);
-//  EXPECT_NEAR (transformation (0, 2), -0.4724, 1e-3);
-//  EXPECT_NEAR (transformation (0, 3), 0.03453, 1e-3);
-//
-//  EXPECT_NEAR (transformation (1, 0), -0.02354,  1e-3);
-//  EXPECT_NEAR (transformation (1, 1),  0.9992,   1e-3);
-//  EXPECT_NEAR (transformation (1, 2),  0.03326,  1e-3);
-//  EXPECT_NEAR (transformation (1, 3), -0.001519, 1e-3);
-//
-//  EXPECT_NEAR (transformation (2, 0),  0.4732,  1e-3);
-//  EXPECT_NEAR (transformation (2, 1), -0.01817, 1e-3);
-//  EXPECT_NEAR (transformation (2, 2),  0.8808,  1e-3);
-//  EXPECT_NEAR (transformation (2, 3),  0.04116, 1e-3);
-//
-//  EXPECT_EQ (transformation (3, 0), 0);
-//  EXPECT_EQ (transformation (3, 1), 0);
-//  EXPECT_EQ (transformation (3, 2), 0);
-//  EXPECT_EQ (transformation (3, 3), 1);
+  Eigen::Matrix4f transformation = reg.getFinalTransformation ();
+  EXPECT_NEAR (transformation (0, 0), 0.8806,  1e-3);
+  EXPECT_NEAR (transformation (0, 1), 0.036481287330389023, 1e-2);
+  EXPECT_NEAR (transformation (0, 2), -0.4724, 1e-3);
+  EXPECT_NEAR (transformation (0, 3), 0.03453, 1e-3);
+
+  EXPECT_NEAR (transformation (1, 0), -0.02354,  1e-3);
+  EXPECT_NEAR (transformation (1, 1),  0.9992,   1e-3);
+  EXPECT_NEAR (transformation (1, 2),  0.03326,  1e-3);
+  EXPECT_NEAR (transformation (1, 3), -0.001519, 1e-3);
+
+  EXPECT_NEAR (transformation (2, 0),  0.4732,  1e-3);
+  EXPECT_NEAR (transformation (2, 1), -0.01817, 1e-3);
+  EXPECT_NEAR (transformation (2, 2),  0.8808,  1e-3);
+  EXPECT_NEAR (transformation (2, 3),  0.04116, 1e-3);
+
+  EXPECT_EQ (transformation (3, 0), 0);
+  EXPECT_EQ (transformation (3, 1), 0);
+  EXPECT_EQ (transformation (3, 2), 0);
+  EXPECT_EQ (transformation (3, 3), 1);
+}
+
+TEST (PCL, IterativeClosestPointWithNormals)
+{
+  IterativeClosestPointWithNormals<PointNormal, PointNormal, float> reg_float;
+  reg_float.setUseSymmetricObjective(true);
+  EXPECT_TRUE(reg_float.getUseSymmetricObjective());
+
+  IterativeClosestPointWithNormals<PointNormal, PointNormal, double> reg_double;
+  reg_double.setUseSymmetricObjective(true);
+  EXPECT_TRUE(reg_double.getUseSymmetricObjective());
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -221,8 +274,8 @@ TEST (PCL, IterativeClosestPointWithRejectors)
   pcl::registration::CorrespondenceRejectorSampleConsensus<PointXYZ>::Ptr rej_samp (new pcl::registration::CorrespondenceRejectorSampleConsensus<PointXYZ>);
   reg.addCorrespondenceRejector (rej_samp);
 
-  size_t ntransforms = 10;
-  for (size_t t = 0; t < ntransforms; t++)
+  std::size_t ntransforms = 10;
+  for (std::size_t t = 0; t < ntransforms; t++)
   {
     // Sample a fixed offset between cloud pairs
     Eigen::Affine3f delta_transform;
@@ -271,8 +324,8 @@ TEST (PCL, JointIterativeClosestPoint)
   pcl::registration::CorrespondenceRejectorSampleConsensus<PointXYZ>::Ptr rej_samp (new pcl::registration::CorrespondenceRejectorSampleConsensus<PointXYZ>);
   reg.addCorrespondenceRejector (rej_samp);
 
-  size_t ntransforms = 10;
-  for (size_t t = 0; t < ntransforms; t++)
+  std::size_t ntransforms = 10;
+  for (std::size_t t = 0; t < ntransforms; t++)
   {
 
     // Sample a fixed offset between cloud pairs
@@ -280,8 +333,8 @@ TEST (PCL, JointIterativeClosestPoint)
     // No rotation, since at a random offset this could make it converge to a wrong (but still reasonable) result
     sampleRandomTransform (delta_transform, 0., 0.10);
     // Make a few transformed versions of the data, plus noise
-    size_t nclouds = 5;
-    for (size_t i = 0; i < nclouds; i++)
+    std::size_t nclouds = 5;
+    for (std::size_t i = 0; i < nclouds; i++)
     {
       PointCloud<PointXYZ>::ConstPtr source (cloud_source.makeShared ());
       // Sample random global transform for each pair
@@ -622,10 +675,10 @@ TEST (PCL, PyramidFeatureHistogram)
   ppf_estimator.compute (*ppf_signature_target);
 
 
-  vector<pair<float, float> > dim_range_input, dim_range_target;
-  for (size_t i = 0; i < 3; ++i) dim_range_input.emplace_back(static_cast<float> (-M_PI), static_cast<float> (M_PI));
+  std::vector<pair<float, float> > dim_range_input, dim_range_target;
+  for (std::size_t i = 0; i < 3; ++i) dim_range_input.emplace_back(static_cast<float> (-M_PI), static_cast<float> (M_PI));
   dim_range_input.emplace_back(0.0f, 1.0f);
-  for (size_t i = 0; i < 3; ++i) dim_range_target.emplace_back(static_cast<float> (-M_PI) * 10.0f, static_cast<float> (M_PI) * 10.0f);
+  for (std::size_t i = 0; i < 3; ++i) dim_range_target.emplace_back(static_cast<float> (-M_PI) * 10.0f, static_cast<float> (M_PI) * 10.0f);
   dim_range_target.emplace_back(0.0f, 50.0f);
 
 
@@ -644,8 +697,8 @@ TEST (PCL, PyramidFeatureHistogram)
   float similarity_value = PyramidFeatureHistogram<PPFSignature>::comparePyramidFeatureHistograms (pyramid_source, pyramid_target);
   EXPECT_NEAR (similarity_value, 0.74101555347442627, 1e-4);
 
-  vector<pair<float, float> > dim_range_target2;
-  for (size_t i = 0; i < 3; ++i) dim_range_target2.emplace_back(static_cast<float> (-M_PI) * 5.0f, static_cast<float> (M_PI) * 5.0f);
+  std::vector<pair<float, float> > dim_range_target2;
+  for (std::size_t i = 0; i < 3; ++i) dim_range_target2.emplace_back(static_cast<float> (-M_PI) * 5.0f, static_cast<float> (M_PI) * 5.0f);
     dim_range_target2.emplace_back(0.0f, 20.0f);
 
   pyramid_source->setTargetDimensionRange (dim_range_target2);
@@ -658,8 +711,8 @@ TEST (PCL, PyramidFeatureHistogram)
   EXPECT_NEAR (similarity_value2, 0.80097091197967529, 1e-4);
 
 
-  vector<pair<float, float> > dim_range_target3;
-  for (size_t i = 0; i < 3; ++i) dim_range_target3.emplace_back(static_cast<float> (-M_PI) * 2.0f, static_cast<float> (M_PI) * 2.0f);
+  std::vector<pair<float, float> > dim_range_target3;
+  for (std::size_t i = 0; i < 3; ++i) dim_range_target3.emplace_back(static_cast<float> (-M_PI) * 2.0f, static_cast<float> (M_PI) * 2.0f);
   dim_range_target3.emplace_back(0.0f, 10.0f);
 
   pyramid_source->setTargetDimensionRange (dim_range_target3);
@@ -784,7 +837,7 @@ main (int argc, char** argv)
   return (RUN_ALL_TESTS ());
 
   // Tranpose the cloud_model
-  /*for (size_t i = 0; i < cloud_model.points.size (); ++i)
+  /*for (std::size_t i = 0; i < cloud_model.points.size (); ++i)
   {
   //  cloud_model.points[i].z += 1;
   }*/

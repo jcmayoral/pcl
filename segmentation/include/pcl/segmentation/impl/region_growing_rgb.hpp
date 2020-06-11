@@ -203,7 +203,7 @@ pcl::RegionGrowingRGB<PointT, NormalT>::extract (std::vector <pcl::PointIndices>
       cluster_iter = clusters_.erase (cluster_iter);
     }
     else
-      cluster_iter++;
+      ++cluster_iter;
   }
 
   clusters.reserve (clusters_.size ());
@@ -399,10 +399,9 @@ pcl::RegionGrowingRGB<PointT, NormalT>::applyRegionMergingAlgorithm ()
 
   float dist_thresh = distance_threshold_;
   int homogeneous_region_number = 0;
-  int curr_homogeneous_region = 0;
   for (int i_seg = 0; i_seg < number_of_segments_; i_seg++)
   {
-    curr_homogeneous_region = 0;
+    int curr_homogeneous_region = 0;
     if (segment_labels_[i_seg] == -1)
     {
       segment_labels_[i_seg] = homogeneous_region_number;
@@ -595,9 +594,9 @@ pcl::RegionGrowingRGB<PointT, NormalT>::assembleRegions (std::vector<unsigned in
   while (itr1 < itr2)
   {
     while (!(itr1->indices.empty ()) && itr1 < itr2) 
-      itr1++;
+      ++itr1;
     while (  itr2->indices.empty ()  && itr1 < itr2) 
-      itr2--;
+      --itr2;
 	  
     if (itr1 != itr2)
       itr1->indices.swap (itr2->indices);
@@ -644,7 +643,7 @@ pcl::RegionGrowingRGB<PointT, NormalT>::validatePoint (int initial_seed, int poi
     if (smooth_mode_flag_ == true)
     {
       Eigen::Map<Eigen::Vector3f> nghbr_normal (static_cast<float*> (normals_->points[nghbr].normal));
-      float dot_product = fabsf (nghbr_normal.dot (initial_normal));
+      float dot_product = std::abs (nghbr_normal.dot (initial_normal));
       if (dot_product < cosine_threshold)
         return (false);
     }
@@ -652,7 +651,7 @@ pcl::RegionGrowingRGB<PointT, NormalT>::validatePoint (int initial_seed, int poi
     {
       Eigen::Map<Eigen::Vector3f> nghbr_normal (static_cast<float*> (normals_->points[nghbr].normal));
       Eigen::Map<Eigen::Vector3f> initial_seed_normal (static_cast<float*> (normals_->points[initial_seed].normal));
-      float dot_product = fabsf (nghbr_normal.dot (initial_seed_normal));
+      float dot_product = std::abs (nghbr_normal.dot (initial_seed_normal));
       if (dot_product < cosine_threshold)
         return (false);
     }
@@ -678,7 +677,7 @@ pcl::RegionGrowingRGB<PointT, NormalT>::validatePoint (int initial_seed, int poi
     Eigen::Map<Eigen::Vector3f> nghbr_point (static_cast<float*> (data_n));
     Eigen::Map<Eigen::Vector3f> initial_point (static_cast<float*> (data_p));
     Eigen::Map<Eigen::Vector3f> initial_normal (static_cast<float*> (normals_->points[point].normal));
-    float residual = fabsf (initial_normal.dot (initial_point - nghbr_point));
+    float residual = std::abs (initial_normal.dot (initial_point - nghbr_point));
     if (residual > residual_threshold_)
       is_a_seed = false;
   }
@@ -742,7 +741,7 @@ pcl::RegionGrowingRGB<PointT, NormalT>::getSegmentFromPoint (int index, pcl::Poi
     for (auto i_segment = clusters_.cbegin (); i_segment != clusters_.cend (); i_segment++)
     {
       bool segment_was_found = false;
-      for (size_t i_point = 0; i_point < i_segment->indices.size (); i_point++)
+      for (std::size_t i_point = 0; i_point < i_segment->indices.size (); i_point++)
       {
         if (i_segment->indices[i_point] == index)
         {

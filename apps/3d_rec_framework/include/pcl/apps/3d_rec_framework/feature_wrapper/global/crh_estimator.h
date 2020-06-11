@@ -11,6 +11,8 @@
 #include <pcl/apps/3d_rec_framework/feature_wrapper/normal_estimator.h>
 #include <pcl/features/crh.h>
 
+#include <memory>
+
 namespace pcl
 {
   namespace rec_3d_framework
@@ -23,7 +25,7 @@ namespace pcl
       using GlobalEstimator<PointInT, FeatureT>::normal_estimator_;
       using GlobalEstimator<PointInT, FeatureT>::normals_;
 
-      typename boost::shared_ptr<GlobalEstimator<PointInT, FeatureT> > feature_estimator_;
+      std::shared_ptr<GlobalEstimator<PointInT, FeatureT>> feature_estimator_;
       using CRHPointCloud = pcl::PointCloud<pcl::Histogram<90> >;
       std::vector< CRHPointCloud::Ptr > crh_histograms_;
 
@@ -35,7 +37,7 @@ namespace pcl
       }
 
       void
-      setFeatureEstimator(typename boost::shared_ptr<GlobalEstimator<PointInT, FeatureT> > & feature_estimator) {
+      setFeatureEstimator(std::shared_ptr<GlobalEstimator<PointInT, FeatureT>>& feature_estimator) {
         feature_estimator_ = feature_estimator;
       }
 
@@ -67,7 +69,7 @@ namespace pcl
         crh.setInputCloud(processed);
         crh.setInputNormals(normals_);
 
-        for (size_t idx = 0; idx < signatures.size (); idx++)
+        for (std::size_t idx = 0; idx < signatures.size (); idx++)
         {
           Eigen::Vector4f centroid4f(centroids[idx][0],centroids[idx][1],centroids[idx][2],0);
           crh.setCentroid(centroid4f);

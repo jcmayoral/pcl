@@ -39,6 +39,7 @@
 
 #pragma once
 
+#include <pcl/memory.h>
 #include <pcl/pcl_config.h>
 #include <pcl/pcl_macros.h>
 
@@ -75,8 +76,8 @@ namespace pcl
     class PCL_EXPORTS OpenNI2Grabber : public Grabber
     {
       public:
-        using Ptr = boost::shared_ptr<OpenNI2Grabber>;
-        using ConstPtr = boost::shared_ptr<const OpenNI2Grabber>;
+        using Ptr = shared_ptr<OpenNI2Grabber>;
+        using ConstPtr = shared_ptr<const OpenNI2Grabber>;
 
         // Templated images
         using DepthImage = pcl::io::DepthImage;
@@ -147,7 +148,7 @@ namespace pcl
           const Mode& image_mode = OpenNI_Default_Mode);
 
         /** \brief virtual Destructor inherited from the Grabber interface. It never throws. */
-        ~OpenNI2Grabber () throw ();
+        ~OpenNI2Grabber () noexcept;
 
         /** \brief Start the data acquisition. */
         void
@@ -423,9 +424,9 @@ namespace pcl
         convertToXYZIPointCloud (const pcl::io::openni2::IRImage::Ptr &image,
           const pcl::io::openni2::DepthImage::Ptr &depth_image);
 
-        std::vector<uint8_t> color_resize_buffer_;
-        std::vector<uint16_t> depth_resize_buffer_;
-        std::vector<uint16_t> ir_resize_buffer_;
+        std::vector<std::uint8_t> color_resize_buffer_;
+        std::vector<std::uint16_t> depth_resize_buffer_;
+        std::vector<std::uint16_t> ir_resize_buffer_;
 
         // Stream callbacks /////////////////////////////////////////////////////
         void

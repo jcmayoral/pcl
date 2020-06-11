@@ -37,7 +37,7 @@
  *
  */
 
-#include <gtest/gtest.h>
+#include <pcl/test/gtest.h>
 #include <pcl/point_cloud.h>
 #include <pcl/features/normal_3d.h>
 #include <pcl/features/boundary.h>
@@ -50,7 +50,7 @@ using namespace std;
 using KdTreePtr = search::KdTree<PointXYZ>::Ptr;
 
 PointCloud<PointXYZ> cloud;
-vector<int> indices;
+std::vector<int> indices;
 KdTreePtr tree;
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -146,7 +146,7 @@ main (int argc, char** argv)
   }
 
   indices.resize (cloud.points.size ());
-  for (size_t i = 0; i < indices.size (); ++i)
+  for (std::size_t i = 0; i < indices.size (); ++i)
     indices[i] = static_cast<int> (i);
 
   tree.reset (new search::KdTree<PointXYZ> (false));

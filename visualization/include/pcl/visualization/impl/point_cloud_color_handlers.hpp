@@ -35,18 +35,24 @@
  *
  */
 
-#ifndef PCL_POINT_CLOUD_COLOR_HANDLERS_IMPL_HPP_
-#define PCL_POINT_CLOUD_COLOR_HANDLERS_IMPL_HPP_
+#pragma once
 
 #include <set>
 #include <map>
 
 #include <pcl/pcl_macros.h>
 #include <pcl/common/colors.h>
+#include <pcl/common/point_tests.h> // for pcl::isFinite
 
-///////////////////////////////////////////////////////////////////////////////////////////
+
+namespace pcl
+{
+
+namespace visualization
+{
+
 template <typename PointT> vtkSmartPointer<vtkDataArray>
-pcl::visualization::PointCloudColorHandlerCustom<PointT>::getColor () const
+PointCloudColorHandlerCustom<PointT>::getColor () const
 {
   if (!capable_ || !cloud_)
     return nullptr;
@@ -71,9 +77,9 @@ pcl::visualization::PointCloudColorHandlerCustom<PointT>::getColor () const
   return scalars;
 }
 
-///////////////////////////////////////////////////////////////////////////////////////////
+
 template <typename PointT> vtkSmartPointer<vtkDataArray>
-pcl::visualization::PointCloudColorHandlerRandom<PointT>::getColor () const
+PointCloudColorHandlerRandom<PointT>::getColor () const
 {
   if (!capable_ || !cloud_)
     return nullptr;
@@ -89,8 +95,8 @@ pcl::visualization::PointCloudColorHandlerRandom<PointT>::getColor () const
   double r, g, b;
   pcl::visualization::getRandomColors (r, g, b);
 
-  int r_ = static_cast<int> (pcl_lrint (r * 255.0)), 
-      g_ = static_cast<int> (pcl_lrint (g * 255.0)), 
+  int r_ = static_cast<int> (pcl_lrint (r * 255.0)),
+      g_ = static_cast<int> (pcl_lrint (g * 255.0)),
       b_ = static_cast<int> (pcl_lrint (b * 255.0));
 
   // Color every point
@@ -104,14 +110,14 @@ pcl::visualization::PointCloudColorHandlerRandom<PointT>::getColor () const
   return scalars;
 }
 
-///////////////////////////////////////////////////////////////////////////////////////////
+
 template <typename PointT> void
-pcl::visualization::PointCloudColorHandlerRGBField<PointT>::setInputCloud (
+PointCloudColorHandlerRGBField<PointT>::setInputCloud (
     const PointCloudConstPtr &cloud)
 {
   PointCloudColorHandler<PointT>::setInputCloud (cloud);
   // Handle the 24-bit packed RGB values
-  field_idx_ = pcl::getFieldIndex (*cloud, "rgb", fields_);
+  field_idx_ = pcl::getFieldIndex<PointT> ("rgb", fields_);
   if (field_idx_ != -1)
   {
     capable_ = true;
@@ -119,7 +125,7 @@ pcl::visualization::PointCloudColorHandlerRGBField<PointT>::setInputCloud (
   }
   else
   {
-    field_idx_ = pcl::getFieldIndex (*cloud, "rgba", fields_);
+    field_idx_ = pcl::getFieldIndex<PointT> ("rgba", fields_);
     if (field_idx_ != -1)
       capable_ = true;
     else
@@ -127,9 +133,9 @@ pcl::visualization::PointCloudColorHandlerRGBField<PointT>::setInputCloud (
   }
 }
 
-///////////////////////////////////////////////////////////////////////////////////////////
+
 template <typename PointT> vtkSmartPointer<vtkDataArray>
-pcl::visualization::PointCloudColorHandlerRGBField<PointT>::getColor () const
+PointCloudColorHandlerRGBField<PointT>::getColor () const
 {
   if (!capable_ || !cloud_)
     return nullptr;
@@ -137,9 +143,9 @@ pcl::visualization::PointCloudColorHandlerRGBField<PointT>::getColor () const
    // Get the RGB field index
   std::vector<pcl::PCLPointField> fields;
   int rgba_index = -1;
-  rgba_index = pcl::getFieldIndex (*cloud_, "rgb", fields);
+  rgba_index = pcl::getFieldIndex<PointT> ("rgb", fields);
   if (rgba_index == -1)
-    rgba_index = pcl::getFieldIndex (*cloud_, "rgba", fields);
+    rgba_index = pcl::getFieldIndex<PointT> ("rgba", fields);
 
   int rgba_offset = fields[rgba_index].offset;
 
@@ -153,7 +159,7 @@ pcl::visualization::PointCloudColorHandlerRGBField<PointT>::getColor () const
   int j = 0;
   // If XYZ present, check if the points are invalid
   int x_idx = -1;
-  for (size_t d = 0; d < fields_.size (); ++d)
+  for (std::size_t d = 0; d < fields_.size (); ++d)
     if (fields_[d].name == "x")
       x_idx = static_cast<int> (d);
 
@@ -165,7 +171,7 @@ pcl::visualization::PointCloudColorHandlerRGBField<PointT>::getColor () const
     {
       // Copy the value at the specified field
       if (!std::isfinite (cloud_->points[cp].x) ||
-          !std::isfinite (cloud_->points[cp].y) || 
+          !std::isfinite (cloud_->points[cp].y) ||
           !std::isfinite (cloud_->points[cp].z))
         continue;
 
@@ -191,13 +197,13 @@ pcl::visualization::PointCloudColorHandlerRGBField<PointT>::getColor () const
   return scalars;
 }
 
-///////////////////////////////////////////////////////////////////////////////////////////
+
 template <typename PointT>
-pcl::visualization::PointCloudColorHandlerHSVField<PointT>::PointCloudColorHandlerHSVField (const PointCloudConstPtr &cloud) : 
-  pcl::visualization::PointCloudColorHandler<PointT>::PointCloudColorHandler (cloud)
+PointCloudColorHandlerHSVField<PointT>::PointCloudColorHandlerHSVField (const PointCloudConstPtr &cloud) :
+  PointCloudColorHandler<PointT>::PointCloudColorHandler (cloud)
 {
   // Check for the presence of the "H" field
-  field_idx_ = pcl::getFieldIndex (*cloud, "h", fields_);
+  field_idx_ = pcl::getFieldIndex<PointT> ("h", fields_);
   if (field_idx_ == -1)
   {
     capable_ = false;
@@ -205,7 +211,7 @@ pcl::visualization::PointCloudColorHandlerHSVField<PointT>::PointCloudColorHandl
   }
 
   // Check for the presence of the "S" field
-  s_field_idx_ = pcl::getFieldIndex (*cloud, "s", fields_);
+  s_field_idx_ = pcl::getFieldIndex<PointT> ("s", fields_);
   if (s_field_idx_ == -1)
   {
     capable_ = false;
@@ -213,7 +219,7 @@ pcl::visualization::PointCloudColorHandlerHSVField<PointT>::PointCloudColorHandl
   }
 
   // Check for the presence of the "V" field
-  v_field_idx_ = pcl::getFieldIndex (*cloud, "v", fields_);
+  v_field_idx_ = pcl::getFieldIndex<PointT> ("v", fields_);
   if (v_field_idx_ == -1)
   {
     capable_ = false;
@@ -222,9 +228,9 @@ pcl::visualization::PointCloudColorHandlerHSVField<PointT>::PointCloudColorHandl
   capable_ = true;
 }
 
-///////////////////////////////////////////////////////////////////////////////////////////
+
 template <typename PointT> vtkSmartPointer<vtkDataArray>
-pcl::visualization::PointCloudColorHandlerHSVField<PointT>::getColor () const
+PointCloudColorHandlerHSVField<PointT>::getColor () const
 {
   if (!capable_ || !cloud_)
     return nullptr;
@@ -240,7 +246,7 @@ pcl::visualization::PointCloudColorHandlerHSVField<PointT>::getColor () const
   // If XYZ present, check if the points are invalid
   int x_idx = -1;
 
-  for (size_t d = 0; d < fields_.size (); ++d)
+  for (std::size_t d = 0; d < fields_.size (); ++d)
     if (fields_[d].name == "x")
       x_idx = static_cast<int> (d);
 
@@ -279,7 +285,7 @@ pcl::visualization::PointCloudColorHandlerHSVField<PointT>::getColor () const
       {
         // calculate p, q, t from HSV-values
         float a = h / 60;
-        int   i = floor (a);
+        int   i = std::floor (a);
         float f = a - i;
         float p = v * (1 - s);
         float q = v * (1 - s * f);
@@ -331,7 +337,7 @@ pcl::visualization::PointCloudColorHandlerHSVField<PointT>::getColor () const
       {
         // calculate p, q, t from HSV-values
         float a = h / 60;
-        int   i = floor (a);
+        int   i = std::floor (a);
         float f = a - i;
         float p = v * (1 - s);
         float q = v * (1 - s * f);
@@ -359,22 +365,22 @@ pcl::visualization::PointCloudColorHandlerHSVField<PointT>::getColor () const
   return scalars;
 }
 
-///////////////////////////////////////////////////////////////////////////////////////////
+
 template <typename PointT> void
-pcl::visualization::PointCloudColorHandlerGenericField<PointT>::setInputCloud (
+PointCloudColorHandlerGenericField<PointT>::setInputCloud (
     const PointCloudConstPtr &cloud)
 {
   PointCloudColorHandler<PointT>::setInputCloud (cloud);
-  field_idx_  = pcl::getFieldIndex (*cloud, field_name_, fields_);
+  field_idx_  = pcl::getFieldIndex<PointT> (field_name_, fields_);
   if (field_idx_ != -1)
     capable_ = true;
   else
     capable_ = false;
 }
 
-///////////////////////////////////////////////////////////////////////////////////////////
+
 template <typename PointT> vtkSmartPointer<vtkDataArray>
-pcl::visualization::PointCloudColorHandlerGenericField<PointT>::getColor () const
+PointCloudColorHandlerGenericField<PointT>::getColor () const
 {
   if (!capable_ || !cloud_)
     return nullptr;
@@ -393,7 +399,7 @@ pcl::visualization::PointCloudColorHandlerGenericField<PointT>::getColor () cons
   int j = 0;
   // If XYZ present, check if the points are invalid
   int x_idx = -1;
-  for (size_t d = 0; d < fields_.size (); ++d)
+  for (std::size_t d = 0; d < fields_.size (); ++d)
     if (fields_[d].name == "x")
       x_idx = static_cast<int> (d);
 
@@ -406,7 +412,7 @@ pcl::visualization::PointCloudColorHandlerGenericField<PointT>::getColor () cons
       if (!std::isfinite (cloud_->points[cp].x) || !std::isfinite (cloud_->points[cp].y) || !std::isfinite (cloud_->points[cp].z))
         continue;
 
-      const uint8_t* pt_data = reinterpret_cast<const uint8_t*> (&cloud_->points[cp]);
+      const std::uint8_t* pt_data = reinterpret_cast<const std::uint8_t*> (&cloud_->points[cp]);
       memcpy (&field_data, pt_data + fields_[field_idx_].offset, pcl::getFieldSize (fields_[field_idx_].datatype));
 
       colors[j] = field_data;
@@ -418,7 +424,7 @@ pcl::visualization::PointCloudColorHandlerGenericField<PointT>::getColor () cons
     // Color every point
     for (vtkIdType cp = 0; cp < nr_points; ++cp)
     {
-      const uint8_t* pt_data = reinterpret_cast<const uint8_t*> (&cloud_->points[cp]);
+      const std::uint8_t* pt_data = reinterpret_cast<const std::uint8_t*> (&cloud_->points[cp]);
       memcpy (&field_data, pt_data + fields_[field_idx_].offset, pcl::getFieldSize (fields_[field_idx_].datatype));
 
       if (!std::isfinite (field_data))
@@ -432,23 +438,23 @@ pcl::visualization::PointCloudColorHandlerGenericField<PointT>::getColor () cons
   return scalars;
 }
 
-///////////////////////////////////////////////////////////////////////////////////////////
+
 template <typename PointT> void
-pcl::visualization::PointCloudColorHandlerRGBAField<PointT>::setInputCloud (
+PointCloudColorHandlerRGBAField<PointT>::setInputCloud (
     const PointCloudConstPtr &cloud)
 {
   PointCloudColorHandler<PointT>::setInputCloud (cloud);
   // Handle the 24-bit packed RGBA values
-  field_idx_ = pcl::getFieldIndex (*cloud, "rgba", fields_);
+  field_idx_ = pcl::getFieldIndex<PointT> ("rgba", fields_);
   if (field_idx_ != -1)
     capable_ = true;
   else
     capable_ = false;
 }
 
-///////////////////////////////////////////////////////////////////////////////////////////
+
 template <typename PointT> vtkSmartPointer<vtkDataArray>
-pcl::visualization::PointCloudColorHandlerRGBAField<PointT>::getColor () const
+PointCloudColorHandlerRGBAField<PointT>::getColor () const
 {
   if (!capable_ || !cloud_)
     return nullptr;
@@ -460,15 +466,15 @@ pcl::visualization::PointCloudColorHandlerRGBAField<PointT>::getColor () const
   scalars->SetNumberOfTuples (nr_points);
   unsigned char* colors = scalars->GetPointer (0);
 
-  int j = 0;
   // If XYZ present, check if the points are invalid
   int x_idx = -1;
-  for (size_t d = 0; d < fields_.size (); ++d)
+  for (std::size_t d = 0; d < fields_.size (); ++d)
     if (fields_[d].name == "x")
       x_idx = static_cast<int> (d);
 
   if (x_idx != -1)
   {
+    int j = 0;
     // Color every point
     for (vtkIdType cp = 0; cp < nr_points; ++cp)
     {
@@ -500,12 +506,12 @@ pcl::visualization::PointCloudColorHandlerRGBAField<PointT>::getColor () const
   return scalars;
 }
 
-///////////////////////////////////////////////////////////////////////////////////////////
+
 template <typename PointT> void
-pcl::visualization::PointCloudColorHandlerLabelField<PointT>::setInputCloud (const PointCloudConstPtr &cloud)
+PointCloudColorHandlerLabelField<PointT>::setInputCloud (const PointCloudConstPtr &cloud)
 {
   PointCloudColorHandler<PointT>::setInputCloud (cloud);
-  field_idx_ = pcl::getFieldIndex (*cloud, "label", fields_);
+  field_idx_ = pcl::getFieldIndex<PointT> ("label", fields_);
   if (field_idx_ != -1)
   {
     capable_ = true;
@@ -513,9 +519,9 @@ pcl::visualization::PointCloudColorHandlerLabelField<PointT>::setInputCloud (con
   }
 }
 
-///////////////////////////////////////////////////////////////////////////////////////////
+
 template <typename PointT> vtkSmartPointer<vtkDataArray>
-pcl::visualization::PointCloudColorHandlerLabelField<PointT>::getColor () const
+PointCloudColorHandlerLabelField<PointT>::getColor () const
 {
   if (!capable_ || !cloud_)
     return nullptr;
@@ -528,17 +534,17 @@ pcl::visualization::PointCloudColorHandlerLabelField<PointT>::getColor () const
   unsigned char* colors = scalars->GetPointer (0);
 
 
-  std::map<uint32_t, pcl::RGB> colormap;
+  std::map<std::uint32_t, pcl::RGB> colormap;
   if (!static_mapping_)
   {
-    std::set<uint32_t> labels;
+    std::set<std::uint32_t> labels;
     // First pass: find unique labels
     for (vtkIdType i = 0; i < nr_points; ++i)
       labels.insert (cloud_->points[i].label);
 
     // Assign Glasbey colors in ascending order of labels
-    size_t color = 0;
-    for (std::set<uint32_t>::iterator iter = labels.begin (); iter != labels.end (); ++iter, ++color)
+    std::size_t color = 0;
+    for (std::set<std::uint32_t>::iterator iter = labels.begin (); iter != labels.end (); ++iter, ++color)
       colormap[*iter] = GlasbeyLUT::at (color % GlasbeyLUT::size ());
   }
 
@@ -558,5 +564,6 @@ pcl::visualization::PointCloudColorHandlerLabelField<PointT>::getColor () const
   return scalars;
 }
 
-#endif      // PCL_POINT_CLOUD_COLOR_HANDLERS_IMPL_HPP_
+} // namespace visualization
+} // namespace pcl
 

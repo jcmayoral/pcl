@@ -43,8 +43,10 @@
 #include <pcl/io/impl/synchronized_queue.hpp>
 #include <pcl/point_types.h>
 #include <pcl/point_cloud.h>
+#include <pcl/memory.h>
 #include <boost/asio.hpp>
 
+#include <memory>
 #include <thread>
 
 namespace pcl
@@ -70,7 +72,7 @@ namespace pcl
       RobotEyeGrabber (const boost::asio::ip::address& ipAddress, unsigned short port=443);
 
       /** \brief virtual Destructor inherited from the Grabber interface. It never throws. */
-      ~RobotEyeGrabber () throw ();
+      ~RobotEyeGrabber () noexcept;
 
       /** \brief Starts the RobotEye grabber.
        * The grabber runs on a separate thread, this call will return without blocking. */
@@ -120,7 +122,7 @@ namespace pcl
     private:
 
       bool terminate_thread_;
-      size_t signal_point_cloud_size_;
+      std::size_t signal_point_cloud_size_;
       unsigned short data_port_;
       enum { MAX_LENGTH = 65535 };
       unsigned char receive_buffer_[MAX_LENGTH];
@@ -129,9 +131,9 @@ namespace pcl
       boost::asio::ip::address sensor_address_;
       boost::asio::ip::udp::endpoint sender_endpoint_;
       boost::asio::io_service io_service_;
-      boost::shared_ptr<boost::asio::ip::udp::socket> socket_;
-      boost::shared_ptr<std::thread> socket_thread_;
-      boost::shared_ptr<std::thread> consumer_thread_;
+      std::shared_ptr<boost::asio::ip::udp::socket> socket_;
+      std::shared_ptr<std::thread> socket_thread_;
+      std::shared_ptr<std::thread> consumer_thread_;
 
       pcl::SynchronizedQueue<boost::shared_array<unsigned char> > packet_queue_;
       pcl::PointCloud<pcl::PointXYZI>::Ptr point_cloud_xyzi_;
@@ -142,8 +144,8 @@ namespace pcl
       void asyncSocketReceive ();
       void resetPointCloud ();
       void socketCallback (const boost::system::error_code& error, std::size_t number_of_bytes);
-      void convertPacketData (unsigned char *data_packet, size_t length);
+      void convertPacketData (unsigned char *data_packet, std::size_t length);
       void computeXYZI (pcl::PointXYZI& point_XYZI, unsigned char* point_data);
-      void computeTimestamp (boost::uint32_t& timestamp, unsigned char* point_data);
+      void computeTimestamp (std::uint32_t& timestamp, unsigned char* point_data);
   };
 }

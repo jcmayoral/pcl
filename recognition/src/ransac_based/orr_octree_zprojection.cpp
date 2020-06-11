@@ -60,7 +60,6 @@ pcl::recognition::ORROctreeZProjection::clear ()
     {
       // Delete pixel by pixel
       for ( int j = 0 ; j < num_pixels_y_ ; ++j )
-        if ( pixels_[i][j] )
           delete pixels_[i][j];
 
       // Delete the whole row
@@ -76,7 +75,6 @@ pcl::recognition::ORROctreeZProjection::clear ()
     for ( int i = 0 ; i < num_pixels_x_ ; ++i )
     {
       for ( int j = 0 ; j < num_pixels_y_ ; ++j )
-        if ( sets_[i][j] )
           delete sets_[i][j];
 
       delete[] sets_[i];
@@ -98,7 +96,7 @@ pcl::recognition::ORROctreeZProjection::build (const ORROctree& input, float eps
   this->clear();
 
   // Compute the bounding box of the full leaves
-  const vector<ORROctree::Node*>& full_leaves = input.getFullLeaves ();
+  const std::vector<ORROctree::Node*>& full_leaves = input.getFullLeaves ();
   std::array<float, 4> full_leaves_bounds;
 
   if ( full_leaves.empty() )

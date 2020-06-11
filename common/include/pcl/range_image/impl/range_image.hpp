@@ -36,11 +36,14 @@
  *
  */
 
-#ifndef PCL_RANGE_IMAGE_IMPL_HPP_
-#define PCL_RANGE_IMAGE_IMPL_HPP_
+#pragma once
+
+#include <pcl/range_image/range_image.h>
 
 #include <pcl/pcl_macros.h>
 #include <pcl/common/distances.h>
+#include <pcl/common/point_tests.h> // for pcl::isFinite
+
 
 namespace pcl
 {
@@ -62,7 +65,7 @@ RangeImage::atan2LookUp (float y, float x)
   if (x==0 && y==0)
     return 0;
   float ret;
-  if (fabsf (x) < fabsf (y)) 
+  if (std::abs (x) < std::abs (y)) 
   {
     ret = atan_lookup_table[
       static_cast<int> (
@@ -85,7 +88,7 @@ RangeImage::atan2LookUp (float y, float x)
 inline float
 RangeImage::cosLookUp (float value)
 {
-  int cell_idx = static_cast<int> (pcl_lrintf ( (static_cast<float> (lookup_table_size-1)) * fabsf (value) / (2.0f * static_cast<float> (M_PI))));
+  int cell_idx = static_cast<int> (pcl_lrintf ( (static_cast<float> (lookup_table_size-1)) * std::abs (value) / (2.0f * static_cast<float> (M_PI))));
   return (cos_lookup_table[cell_idx]);
 }
 
@@ -110,8 +113,8 @@ RangeImage::createFromPointCloud (const PointCloudType& point_cloud,
 {
   setAngularResolution (angular_resolution_x, angular_resolution_y);
   
-  width  = static_cast<uint32_t> (pcl_lrint (std::floor (max_angle_width*angular_resolution_x_reciprocal_)));
-  height = static_cast<uint32_t> (pcl_lrint (std::floor (max_angle_height*angular_resolution_y_reciprocal_)));
+  width  = static_cast<std::uint32_t> (pcl_lrint (std::floor (max_angle_width*angular_resolution_x_reciprocal_)));
+  height = static_cast<std::uint32_t> (pcl_lrint (std::floor (max_angle_height*angular_resolution_y_reciprocal_)));
   
   int full_width  = static_cast<int> (pcl_lrint (std::floor (pcl::deg2rad (360.0f)*angular_resolution_x_reciprocal_))),
       full_height = static_cast<int> (pcl_lrint (std::floor (pcl::deg2rad (180.0f)*angular_resolution_y_reciprocal_)));
@@ -240,11 +243,11 @@ RangeImage::doZBuffer (const PointCloudType& point_cloud, float noise_level, flo
   
   float x_real, y_real, range_of_current_point;
   int x, y;
-  for (typename pcl::PointCloud<PointType2>::VectorType::const_iterator it=points2.begin (); it!=points2.end (); ++it)
+  for (const auto& point: points2)
   {
-    if (!isFinite (*it))  // Check for NAN etc
+    if (!isFinite (point))  // Check for NAN etc
       continue;
-    Vector3fMapConst current_point = it->getVector3fMap ();
+    Vector3fMapConst current_point = point.getVector3fMap ();
     
     this->getImagePoint (current_point, x_real, y_real, range_of_current_point);
     this->real2DToInt2D (x_real, y_real, x, y);
@@ -654,7 +657,7 @@ RangeImage::getAcutenessValue (const PointWithRange& point1, const PointWithRang
   float ret = 1.0f - float (std::fabs (impact_angle)/ (0.5f*M_PI));
   if (impact_angle < 0.0f)
     ret = -ret;
-  //if (fabs (ret)>1)
+  //if (std::abs (ret)>1)
     //std::cout << PVARAC (impact_angle)<<PVARN (ret);
   return ret;
 }
@@ -974,7 +977,8 @@ RangeImage::getSurfaceInformation (int x, int y, int radius, const Eigen::Vector
   if (eigen_values_all_neighbors!=nullptr)
     eigen_values_all_neighbors->setZero ();
   
-  int blocksize = static_cast<int> (pow (static_cast<double> ( (2.0 * radius + 1.0)), 2.0));
+  const auto sqrt_blocksize = 2 * radius + 1;
+  const auto blocksize = sqrt_blocksize * sqrt_blocksize;
   
   PointWithRange given_point;
   given_point.x=point[0];  given_point.y=point[1];  given_point.z=point[2];
@@ -1051,7 +1055,8 @@ RangeImage::getSquaredDistanceOfNthNeighbor (int x, int y, int radius, int n, in
   if (!std::isfinite (point.range))
     return -std::numeric_limits<float>::infinity ();
   
-  int blocksize = static_cast<int> (pow (static_cast<double> (2.0 * radius + 1.0), 2.0));
+  const auto sqrt_blocksize = 2 * radius + 1;
+  const auto blocksize = sqrt_blocksize * sqrt_blocksize;
   std::vector<float> neighbor_distances (blocksize);
   int neighbor_counter = 0;
   for (int y2=y-radius; y2<=y+radius; y2+=step_size)
@@ -1122,9 +1127,8 @@ RangeImage::getAverageViewPoint (const PointCloudTypeWithViewpoints& point_cloud
 {
   Eigen::Vector3f average_viewpoint (0,0,0);
   int point_counter = 0;
-  for (unsigned int point_idx=0; point_idx<point_cloud.points.size (); ++point_idx)
+  for (const auto& point: point_cloud.points)
   {
-    const typename PointCloudTypeWithViewpoints::PointType& point = point_cloud.points[point_idx];
     if (!std::isfinite (point.vp_x) || !std::isfinite (point.vp_y) || !std::isfinite (point.vp_z))
       continue;
     average_viewpoint[0] += point.vp_x;
@@ -1218,11 +1222,11 @@ template <typename PointCloudType> void
 RangeImage::integrateFarRanges (const PointCloudType& far_ranges)
 {
   float x_real, y_real, range_of_current_point;
-  for (typename PointCloudType::const_iterator it  = far_ranges.points.begin (); it != far_ranges.points.end (); ++it)
+  for (const auto& point: far_ranges.points)
   {
-    //if (!isFinite (*it))  // Check for NAN etc
+    //if (!isFinite (point))  // Check for NAN etc
       //continue;
-    Vector3fMapConst current_point = it->getVector3fMap ();
+    Vector3fMapConst current_point = point.getVector3fMap ();
     
     this->getImagePoint (current_point, x_real, y_real, range_of_current_point);
     
@@ -1249,6 +1253,4 @@ RangeImage::integrateFarRanges (const PointCloudType& far_ranges)
   }
 }
 
-}  // namespace end
-#endif
-
+}  // namespace pcl

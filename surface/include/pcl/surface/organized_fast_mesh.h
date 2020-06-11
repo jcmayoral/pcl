@@ -41,7 +41,9 @@
 #pragma once
 
 #include <pcl/common/angles.h>
+#include <pcl/common/point_tests.h> // for pcl::isFinite
 #include <pcl/surface/reconstruction.h>
+
 
 namespace pcl
 {
@@ -64,8 +66,8 @@ namespace pcl
   class OrganizedFastMesh : public MeshConstruction<PointInT>
   {
     public:
-      using Ptr = boost::shared_ptr<OrganizedFastMesh<PointInT> >;
-      using ConstPtr = boost::shared_ptr<const OrganizedFastMesh<PointInT> >;
+      using Ptr = shared_ptr<OrganizedFastMesh<PointInT> >;
+      using ConstPtr = shared_ptr<const OrganizedFastMesh<PointInT> >;
 
       using MeshConstruction<PointInT>::input_;
       using MeshConstruction<PointInT>::check_tree_;
@@ -94,7 +96,7 @@ namespace pcl
       , triangulation_type_ (QUAD_MESH)
       , viewpoint_ (Eigen::Vector3f::Zero ())
       , store_shadowed_faces_ (false)
-      , cos_angle_tolerance_ (fabsf (std::cos (pcl::deg2rad (12.5f))))
+      , cos_angle_tolerance_ (std::abs (std::cos (pcl::deg2rad (12.5f))))
       , distance_tolerance_ (-1.0f)
       , distance_dependent_ (false)
       , use_depth_as_distance_(false)
@@ -203,7 +205,7 @@ namespace pcl
       setAngleTolerance(float angle_tolerance)
       {
         if (angle_tolerance > 0)
-          cos_angle_tolerance_ = fabsf (std::cos (angle_tolerance));
+          cos_angle_tolerance_ = std::abs (std::cos (angle_tolerance));
         else
           cos_angle_tolerance_ = -1.0f;
       }

@@ -46,6 +46,7 @@
 #include <pcl/geometry/mesh_indices.h>
 #include <pcl/geometry/mesh_elements.h>
 #include <pcl/geometry/mesh_traits.h>
+#include <pcl/memory.h>
 #include <pcl/pcl_macros.h>
 #include <pcl/point_cloud.h>
 
@@ -101,8 +102,8 @@ namespace pcl
       public:
 
         using Self = MeshBase <DerivedT, MeshTraitsT, MeshTagT>;
-        using Ptr = boost::shared_ptr<Self>;
-        using ConstPtr = boost::shared_ptr<const Self>;
+        using Ptr = shared_ptr<Self>;
+        using ConstPtr = shared_ptr<const Self>;
 
         using Derived = DerivedT;
 
@@ -563,13 +564,13 @@ namespace pcl
           if (this->sizeHalfEdges () != other.sizeHalfEdges ()) return (false);
           if (this->sizeFaces     () != other.sizeFaces     ()) return (false);
 
-          for (size_t i=0; i<this->sizeVertices (); ++i)
+          for (std::size_t i=0; i<this->sizeVertices (); ++i)
           {
             if (this->getOutgoingHalfEdgeIndex (VertexIndex (i)) !=
                 other.getOutgoingHalfEdgeIndex (VertexIndex (i))) return (false);
           }
 
-          for (size_t i=0; i<this->sizeHalfEdges (); ++i)
+          for (std::size_t i=0; i<this->sizeHalfEdges (); ++i)
           {
             if (this->getTerminatingVertexIndex (HalfEdgeIndex (i)) !=
                 other.getTerminatingVertexIndex (HalfEdgeIndex (i))) return (false);
@@ -584,7 +585,7 @@ namespace pcl
                 other.getFaceIndex (HalfEdgeIndex (i))) return (false);
           }
 
-          for (size_t i=0; i<this->sizeFaces (); ++i)
+          for (std::size_t i=0; i<this->sizeFaces (); ++i)
           {
             if (this->getInnerHalfEdgeIndex (FaceIndex (i)) !=
                 other.getInnerHalfEdgeIndex (FaceIndex (i))) return (false);
@@ -747,14 +748,14 @@ namespace pcl
         ////////////////////////////////////////////////////////////////////////
 
         /** \brief Get the number of the vertices. */
-        inline size_t
+        inline std::size_t
         sizeVertices () const
         {
           return (vertices_.size ());
         }
 
         /** \brief Get the number of the half-edges. */
-        inline size_t
+        inline std::size_t
         sizeHalfEdges () const
         {
           assert (half_edges_.size () % 2 == 0); // This would be a bug in the mesh.
@@ -762,7 +763,7 @@ namespace pcl
         }
 
         /** \brief Get the number of the edges. */
-        inline size_t
+        inline std::size_t
         sizeEdges () const
         {
           assert (half_edges_.size () % 2 == 0); // This would be a bug in the mesh.
@@ -770,7 +771,7 @@ namespace pcl
         }
 
         /** \brief Get the number of the faces. */
-        inline size_t
+        inline std::size_t
         sizeFaces () const
         {
           return (faces_.size ());
@@ -814,7 +815,7 @@ namespace pcl
 
         /** \brief Reserve storage space n vertices. */
         inline void
-        reserveVertices (const size_t n)
+        reserveVertices (const std::size_t n)
         {
           vertices_.reserve (n);
           this->reserveData (vertex_data_cloud_, n, HasVertexData ());
@@ -822,7 +823,7 @@ namespace pcl
 
         /** \brief Reserve storage space for n edges (2*n storage space is reserved for the half-edges). */
         inline void
-        reserveEdges (const size_t n)
+        reserveEdges (const std::size_t n)
         {
           half_edges_.reserve (2*n);
           this->reserveData (half_edge_data_cloud_, 2*n, HasHalfEdgeData ());
@@ -831,7 +832,7 @@ namespace pcl
 
         /** \brief Reserve storage space for n faces. */
         inline void
-        reserveFaces (const size_t n)
+        reserveFaces (const std::size_t n)
         {
           faces_.reserve (n);
           this->reserveData (face_data_cloud_, n, HasFaceData ());
@@ -843,7 +844,7 @@ namespace pcl
 
         /** \brief Resize the the vertices to n elements. */
         inline void
-        resizeVertices (const size_t n, const VertexData& data = VertexData ())
+        resizeVertices (const std::size_t n, const VertexData& data = VertexData ())
         {
           vertices_.resize (n);
           this->resizeData (vertex_data_cloud_, n, data, HasVertexData ());
@@ -851,7 +852,7 @@ namespace pcl
 
         /** \brief Resize the edges to n elements (half-edges will hold 2*n elements). */
         inline void
-        resizeEdges (const size_t       n,
+        resizeEdges (const std::size_t       n,
                      const EdgeData&    edge_data = EdgeData (),
                      const HalfEdgeData he_data   = HalfEdgeData ())
         {
@@ -862,7 +863,7 @@ namespace pcl
 
         /** \brief Resize the faces to n elements. */
         inline void
-        resizeFaces (const size_t n, const FaceData& data = FaceData ())
+        resizeFaces (const std::size_t n, const FaceData& data = FaceData ())
         {
           faces_.resize (n);
           this->resizeData (face_data_cloud_, n, data, HasFaceData ());
@@ -1919,7 +1920,7 @@ namespace pcl
         bool
         isManifold (std::false_type /*is_manifold*/) const
         {
-          for (size_t i=0; i<this->sizeVertices (); ++i)
+          for (std::size_t i=0; i<this->sizeVertices (); ++i)
           {
             if (!this->isManifold (VertexIndex (i))) return (false);
           }
@@ -1932,27 +1933,27 @@ namespace pcl
 
         /** \brief Reserve storage space for the mesh data. */
         template <class DataCloudT> inline void
-        reserveData (DataCloudT& cloud, const size_t n, std::true_type /*has_data*/) const
+        reserveData (DataCloudT& cloud, const std::size_t n, std::true_type /*has_data*/) const
         {
           cloud.reserve (n);
         }
 
         /** \brief Does nothing */
         template <class DataCloudT> inline void
-        reserveData (DataCloudT& /*cloud*/, const size_t /*n*/, std::false_type /*has_data*/) const
+        reserveData (DataCloudT& /*cloud*/, const std::size_t /*n*/, std::false_type /*has_data*/) const
         {
         }
 
         /** \brief Resize the mesh data. */
         template <class DataCloudT> inline void
-        resizeData (DataCloudT& /*data_cloud*/, const size_t n, const typename DataCloudT::value_type& data, std::true_type /*has_data*/) const
+        resizeData (DataCloudT& /*data_cloud*/, const std::size_t n, const typename DataCloudT::value_type& data, std::true_type /*has_data*/) const
         {
           data.resize (n, data);
         }
 
         /** \brief Does nothing. */
         template <class DataCloudT> inline void
-        resizeData (DataCloudT& /*data_cloud*/, const size_t /*n*/, const typename DataCloudT::value_type& /*data*/, std::false_type /*has_data*/) const
+        resizeData (DataCloudT& /*data_cloud*/, const std::size_t /*n*/, const typename DataCloudT::value_type& /*data*/, std::false_type /*has_data*/) const
         {
         }
 

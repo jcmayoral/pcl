@@ -156,7 +156,7 @@ pcl::KdTreeFLANN<PointT, Dist>::nearestKSearch (const PointT &point, int k,
   // Do mapping to original point cloud
   if (!identity_mapping_) 
   {
-    for (size_t i = 0; i < static_cast<size_t> (k); ++i)
+    for (std::size_t i = 0; i < static_cast<std::size_t> (k); ++i)
     {
       int& neighbor_index = k_indices[i];
       neighbor_index = index_mapping_[neighbor_index];
@@ -235,7 +235,7 @@ pcl::KdTreeFLANN<PointT, Dist>::convertCloudToArray (const PointCloud &cloud)
 
   int original_no_of_points = static_cast<int> (cloud.points.size ());
 
-  cloud_.reset (new float[original_no_of_points * dim_]);
+  cloud_.reset (new float[original_no_of_points * dim_], std::default_delete<float[]> ());
   float* cloud_ptr = cloud_.get ();
   index_mapping_.reserve (original_no_of_points);
   identity_mapping_ = true;
@@ -269,7 +269,7 @@ pcl::KdTreeFLANN<PointT, Dist>::convertCloudToArray (const PointCloud &cloud, co
 
   int original_no_of_points = static_cast<int> (indices.size ());
 
-  cloud_.reset (new float[original_no_of_points * dim_]);
+  cloud_.reset (new float[original_no_of_points * dim_], std::default_delete<float[]> ());
   float* cloud_ptr = cloud_.get ();
   index_mapping_.reserve (original_no_of_points);
   // its a subcloud -> false

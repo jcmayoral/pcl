@@ -37,7 +37,7 @@
  *
  */
 
-#include <gtest/gtest.h>
+#include <pcl/test/gtest.h>
 #include <pcl/point_cloud.h>
 #include <pcl/features/normal_3d.h>
 #include <pcl/io/pcd_io.h>
@@ -51,7 +51,7 @@ using namespace std;
 using KdTreePtr = search::KdTree<PointXYZ>::Ptr;
 
 PointCloud<PointXYZ> cloud;
-vector<int> indices;
+std::vector<int> indices;
 KdTreePtr tree;
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -248,13 +248,13 @@ TEST (PCL, IntensitySpinEstimation)
       p.x = x;
       p.y = y;
       p.z = std::sqrt (400.0f - x * x - y * y);
-      p.intensity = expf (-(powf (x - 3.0f, 2.0f) + powf (y + 2.0f, 2.0f)) / (2.0f * 25.0f)) + expf (-(powf (x + 5.0f, 2.0f) + powf (y - 5.0f, 2.0f))
+      p.intensity = std::exp (-(powf (x - 3.0f, 2.0f) + powf (y + 2.0f, 2.0f)) / (2.0f * 25.0f)) + std::exp (-(powf (x + 5.0f, 2.0f) + powf (y - 5.0f, 2.0f))
                                                                                  / (2.0f * 4.0f));
 
       cloud_xyzi.points.push_back (p);
     }
   }
-  cloud_xyzi.width = static_cast<uint32_t> (cloud_xyzi.points.size ());
+  cloud_xyzi.width = static_cast<std::uint32_t> (cloud_xyzi.points.size ());
 
   // Compute the intensity-domain spin features
   using IntensitySpin = Histogram<20>;
@@ -297,7 +297,7 @@ main (int argc, char** argv)
   }
 
   indices.resize (cloud.points.size ());
-  for (size_t i = 0; i < indices.size (); ++i)
+  for (std::size_t i = 0; i < indices.size (); ++i)
     indices[i] = static_cast<int> (i);
 
   tree.reset (new search::KdTree<PointXYZ> (false));

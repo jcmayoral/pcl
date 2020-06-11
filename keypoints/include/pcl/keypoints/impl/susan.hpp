@@ -131,7 +131,7 @@ pcl::SUSANKeypoint<PointInT, PointOutT, NormalT, IntensityT>::setNumberOfThreads
 //       Eigen::Vector3f diff = normals_->points[*index].getNormal3fMap () - nucleus_normal.getNormal3fMap ();
 //       float c = diff.norm () / t;
 //       c = -1 * pow (c, 6.0);
-//       c = exp (c);
+//       c = std::exp (c);
 //       Eigen::Vector3f xyz = surface_->points[*index].getVector3fMap ();
 //       centroid += c * xyz;
 //       area += c;
@@ -279,7 +279,7 @@ pcl::SUSANKeypoint<PointInT, PointOutT, NormalT, IntensityT>::isWithinNucleusCen
 // template <typename PointInT, typename PointOutT, typename NormalT, typename IntensityT> bool
 // pcl::SUSANKeypoint<PointInT, PointOutT, NormalT, IntensityT>::isWithinSusan2D (int nucleus, int neighbor) const
 // {
-//   return (fabs (intensity_ (surface_->points[nucleus]) - 
+//   return (std::abs (intensity_ (surface_->points[nucleus]) - 
 //                 intensity_ (surface_->points[neighbor])) <= intensity_threshold_);
 // }
 
@@ -295,7 +295,7 @@ pcl::SUSANKeypoint<PointInT, PointOutT, NormalT, IntensityT>::isWithinNucleusCen
 // {
 //   Eigen::Vector3f nucleus_normal = normals_->point[nucleus].getVector3fMap ();
 //   return ((1 - nucleus_normal.dot (normals_->points[*index].getNormalVector3fMap ()) <= angular_threshold_) || 
-//           (fabs (intensity_ (surface_->points[nucleus]) - intensity_ (surface_->points[neighbor])) <= intensity_threshold_));
+//           (std::abs (intensity_ (surface_->points[nucleus]) - intensity_ (surface_->points[neighbor])) <= intensity_threshold_));
 // }
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -306,12 +306,9 @@ pcl::SUSANKeypoint<PointInT, PointOutT, NormalT, IntensityT>::detectKeypoints (P
   response->reserve (surface_->size ());
 
   // Check if the output has a "label" field
-  label_idx_ = pcl::getFieldIndex<PointOutT> (output, "label", out_fields_);
+  label_idx_ = pcl::getFieldIndex<PointOutT> ("label", out_fields_);
 
   const int input_size = static_cast<int> (input_->size ());
-//#ifdef _OPENMP
-//#pragma omp parallel for shared (response) num_threads(threads_)
-//#endif
   for (int point_index = 0; point_index < input_size; ++point_index)
   {
     const PointInT& point_in = input_->points [point_index];
@@ -334,7 +331,7 @@ pcl::SUSANKeypoint<PointInT, PointOutT, NormalT, IntensityT>::detectKeypoints (P
       if ((*index != point_index) && std::isfinite (normals_->points[*index].normal_x))
       {
         // if the point fulfill condition
-        if ((fabs (nucleus_intensity - intensity_ (input_->points[*index])) <= intensity_threshold_) ||
+        if ((std::abs (nucleus_intensity - intensity_ (input_->points[*index])) <= intensity_threshold_) ||
             (1 - nucleus_normal.dot (normals_->points[*index].getNormalVector3fMap ()) <= angular_threshold_))
         {
           ++area;
@@ -358,13 +355,10 @@ pcl::SUSANKeypoint<PointInT, PointOutT, NormalT, IntensityT>::detectKeypoints (P
         if (label_idx_ != -1)
         {
           // save the index in the cloud
-          uint32_t label = static_cast<uint32_t> (point_index);
+          std::uint32_t label = static_cast<std::uint32_t> (point_index);
           memcpy (reinterpret_cast<char*> (&point_out) + out_fields_[label_idx_].offset,
-                  &label, sizeof (uint32_t));
+                  &label, sizeof (std::uint32_t));
         }
-//#ifdef _OPENMP
-//#pragma omp critical
-//#endif
         response->push_back (point_out);
       }
       else
@@ -394,13 +388,10 @@ pcl::SUSANKeypoint<PointInT, PointOutT, NormalT, IntensityT>::detectKeypoints (P
             if (label_idx_ != -1)
             {
               // save the index in the cloud
-              uint32_t label = static_cast<uint32_t> (point_index);
+              std::uint32_t label = static_cast<std::uint32_t> (point_index);
               memcpy (reinterpret_cast<char*> (&point_out) + out_fields_[label_idx_].offset,
-                      &label, sizeof (uint32_t));
+                      &label, sizeof (std::uint32_t));
             }
-//#ifdef _OPENMP
-//#pragma omp critical
-//#endif
             response->push_back (point_out);
           }
         }
@@ -409,12 +400,12 @@ pcl::SUSANKeypoint<PointInT, PointOutT, NormalT, IntensityT>::detectKeypoints (P
   }
   
   response->height = 1;
-  response->width = static_cast<uint32_t> (response->size ());
+  response->width = static_cast<std::uint32_t> (response->size ());
   
   if (!nonmax_)
   {
     output = *response;
-    for (size_t i = 0; i < response->size (); ++i)
+    for (std::size_t i = 0; i < response->size (); ++i)
       keypoints_indices_->indices.push_back (i);
     // we don not change the denseness
     output.is_dense = input_->is_dense;
@@ -424,9 +415,6 @@ pcl::SUSANKeypoint<PointInT, PointOutT, NormalT, IntensityT>::detectKeypoints (P
     output.points.clear ();
     output.points.reserve (response->points.size());
     
-//#ifdef _OPENMP
-//#pragma omp parallel for shared (output) num_threads(threads_)   
-//#endif
     for (int idx = 0; idx < static_cast<int> (response->points.size ()); ++idx)
     {
       const PointOutT& point_in = response->points [idx];
@@ -449,9 +437,6 @@ pcl::SUSANKeypoint<PointInT, PointOutT, NormalT, IntensityT>::detectKeypoints (P
         }
       }
       if (is_minima)
-//#ifdef _OPENMP
-//#pragma omp critical
-//#endif
       {
         output.points.push_back (response->points[idx]);
         keypoints_indices_->indices.push_back (idx);
@@ -459,7 +444,7 @@ pcl::SUSANKeypoint<PointInT, PointOutT, NormalT, IntensityT>::detectKeypoints (P
     }
     
     output.height = 1;
-    output.width = static_cast<uint32_t> (output.points.size());
+    output.width = static_cast<std::uint32_t> (output.points.size());
     output.is_dense = true;
   }
 }

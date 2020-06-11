@@ -44,14 +44,13 @@
 #include <pcl/io/file_grabber.h>
 #include <pcl/common/time_trigger.h>
 #include <pcl/conversions.h>
+#include <pcl/memory.h>
 
 #ifdef HAVE_OPENNI
 #include <pcl/io/openni_camera/openni_image.h>
 #include <pcl/io/openni_camera/openni_image_rgb24.h>
 #include <pcl/io/openni_camera/openni_depth_image.h>
 #endif
-
-#include <boost/shared_ptr.hpp>
 
 #include <string>
 #include <vector>
@@ -63,7 +62,7 @@ namespace pcl
     */
   class PCL_EXPORTS PCDGrabberBase : public Grabber
   {
-    public:   
+    public:
       /** \brief Constructor taking just one PCD file or one TAR file containing multiple PCD files.
         * \param[in] pcd_file path to the PCD file
         * \param[in] frames_per_second frames per second. If 0, start() functions like a trigger, publishing the next PCD in the list.
@@ -78,74 +77,56 @@ namespace pcl
         */
       PCDGrabberBase (const std::vector<std::string>& pcd_files, float frames_per_second, bool repeat);
 
-      /** \brief Copy constructor.
-        * \param[in] src the PCD Grabber base object to copy into this
-        */
-      PCDGrabberBase (const PCDGrabberBase &src) : impl_ ()
-      {
-        *this = src;
-      }
-
-      /** \brief Copy operator.
-        * \param[in] src the PCD Grabber base object to copy into this
-        */
-      PCDGrabberBase&
-      operator = (const PCDGrabberBase &src)
-      {
-        impl_ = src.impl_;
-        return (*this);
-      }
-
       /** \brief Virtual destructor. */
-      ~PCDGrabberBase () throw ();
+      ~PCDGrabberBase () noexcept;
 
       /** \brief Starts playing the list of PCD files if frames_per_second is > 0. Otherwise it works as a trigger: publishes only the next PCD file in the list. */
-      void 
+      void
       start () override;
-      
+
       /** \brief Stops playing the list of PCD files if frames_per_second is > 0. Otherwise the method has no effect. */
-      void 
+      void
       stop () override;
-      
+
       /** \brief Triggers a callback with new data */
-      virtual void 
+      virtual void
       trigger ();
 
       /** \brief Indicates whether the grabber is streaming or not.
         * \return true if grabber is started and hasn't run out of PCD files.
         */
-      bool 
+      bool
       isRunning () const override;
-      
+
       /** \return The name of the grabber */
-      std::string 
+      std::string
       getName () const override;
-      
+
       /** \brief Rewinds to the first PCD file in the list.*/
-      virtual void 
+      virtual void
       rewind ();
 
       /** \brief Returns the frames_per_second. 0 if grabber is trigger-based */
-      float 
+      float
       getFramesPerSecond () const override;
 
       /** \brief Returns whether the repeat flag is on */
-      bool 
+      bool
       isRepeatOn () const;
-  
+
       /** \brief Get cloud (in ROS form) at a particular location */
       bool
-      getCloudAt (size_t idx, 
+      getCloudAt (std::size_t idx,
                   pcl::PCLPointCloud2 &blob,
-                  Eigen::Vector4f &origin, 
+                  Eigen::Vector4f &origin,
                   Eigen::Quaternionf &orientation) const;
 
       /** \brief Returns the size */
-      size_t
+      std::size_t
       numFrames () const;
 
     private:
-      virtual void 
+      virtual void
       publish (const pcl::PCLPointCloud2& blob, const Eigen::Vector4f& origin, const Eigen::Quaternionf& orientation, const std::string& file_name) const = 0;
 
       // to separate and hide the implementation from interface: PIMPL
@@ -158,29 +139,30 @@ namespace pcl
   template <typename PointT> class PCDGrabber : public PCDGrabberBase, public FileGrabber<PointT>
   {
     public:
-      using Ptr = boost::shared_ptr<PCDGrabber>;
+      using Ptr = shared_ptr<PCDGrabber>;
+      using ConstPtr = shared_ptr<const PCDGrabber>;
 
       PCDGrabber (const std::string& pcd_path, float frames_per_second = 0, bool repeat = false);
       PCDGrabber (const std::vector<std::string>& pcd_files, float frames_per_second = 0, bool repeat = false);
-      
+
       /** \brief Virtual destructor. */
-      ~PCDGrabber () throw ()
+      ~PCDGrabber () noexcept
       {
         stop ();
       }
-    
-      // Inherited from FileGrabber
-      const typename pcl::PointCloud<PointT>::ConstPtr
-      operator[] (size_t idx) const override;
 
       // Inherited from FileGrabber
-      size_t
+      const typename pcl::PointCloud<PointT>::ConstPtr
+      operator[] (std::size_t idx) const override;
+
+      // Inherited from FileGrabber
+      std::size_t
       size () const override;
     protected:
 
-      void 
+      void
       publish (const pcl::PCLPointCloud2& blob, const Eigen::Vector4f& origin, const Eigen::Quaternionf& orientation, const std::string& file_name) const override;
-      
+
       boost::signals2::signal<void (const typename pcl::PointCloud<PointT>::ConstPtr&)>* signal_;
       boost::signals2::signal<void (const std::string&)>* file_name_signal_;
 
@@ -221,7 +203,7 @@ namespace pcl
 
   ////////////////////////////////////////////////////////////////////////////////////////////////////////////////
   template<typename PointT> const typename pcl::PointCloud<PointT>::ConstPtr
-  PCDGrabber<PointT>::operator[] (size_t idx) const
+  PCDGrabber<PointT>::operator[] (std::size_t idx) const
   {
     pcl::PCLPointCloud2 blob;
     Eigen::Vector4f origin;
@@ -235,14 +217,14 @@ namespace pcl
   }
 
   ///////////////////////////////////////////////////////////////////////////////////////////////////////////////
-  template <typename PointT> size_t
+  template <typename PointT> std::size_t
   PCDGrabber<PointT>::size () const
   {
     return (numFrames ());
   }
 
   ////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-  template<typename PointT> void 
+  template<typename PointT> void
   PCDGrabber<PointT>::publish (const pcl::PCLPointCloud2& blob, const Eigen::Vector4f& origin, const Eigen::Quaternionf& orientation, const std::string& file_name) const
   {
     typename pcl::PointCloud<PointT>::Ptr cloud (new pcl::PointCloud<PointT> ());
@@ -259,12 +241,12 @@ namespace pcl
     if (!cloud->isOrganized ())
       return;
 
-    boost::shared_ptr<xn::DepthMetaData> depth_meta_data (new xn::DepthMetaData);
+    shared_ptr<xn::DepthMetaData> depth_meta_data (new xn::DepthMetaData);
     depth_meta_data->AllocateData (cloud->width, cloud->height);
     XnDepthPixel* depth_map = depth_meta_data->WritableData ();
-    uint32_t k = 0;
-    for (uint32_t i = 0; i < cloud->height; ++i)
-      for (uint32_t j = 0; j < cloud->width; ++j)
+    std::uint32_t k = 0;
+    for (std::uint32_t i = 0; i < cloud->height; ++i)
+      for (std::uint32_t j = 0; j < cloud->width; ++j)
       {
         depth_map[k] = static_cast<XnDepthPixel> ((*cloud)[k].z * 1000);
         ++k;
@@ -276,20 +258,20 @@ namespace pcl
 
     // ---[ RGB special case
     std::vector<pcl::PCLPointField> fields;
-    int rgba_index = pcl::getFieldIndex (*cloud, "rgb", fields);
+    int rgba_index = pcl::getFieldIndex<PointT> ("rgb", fields);
     if (rgba_index == -1)
-      rgba_index = pcl::getFieldIndex (*cloud, "rgba", fields);
+      rgba_index = pcl::getFieldIndex<PointT> ("rgba", fields);
     if (rgba_index >= 0)
     {
       rgba_index = fields[rgba_index].offset;
 
-      boost::shared_ptr<xn::ImageMetaData> image_meta_data (new xn::ImageMetaData);
+      shared_ptr<xn::ImageMetaData> image_meta_data (new xn::ImageMetaData);
       image_meta_data->AllocateData (cloud->width, cloud->height, XN_PIXEL_FORMAT_RGB24);
       XnRGB24Pixel* image_map = image_meta_data->WritableRGB24Data ();
       k = 0;
-      for (uint32_t i = 0; i < cloud->height; ++i)
+      for (std::uint32_t i = 0; i < cloud->height; ++i)
       {
-        for (uint32_t j = 0; j < cloud->width; ++j)
+        for (std::uint32_t j = 0; j < cloud->width; ++j)
         {
           // Fill r/g/b data, assuming that the order is BGRA
           pcl::RGB rgb;
@@ -304,7 +286,7 @@ namespace pcl
       openni_wrapper::Image::Ptr image (new openni_wrapper::ImageRGB24 (image_meta_data));
       if (image_signal_->num_slots() > 0)
         image_signal_->operator()(image);
-      
+
       if (image_depth_image_signal_->num_slots() > 0)
         image_depth_image_signal_->operator()(image, depth_image, 1.0f / 525.0f);
     }

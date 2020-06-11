@@ -58,7 +58,8 @@ namespace pcl
 
     public:
 
-      using Ptr = boost::shared_ptr<DepthSenseGrabber>;
+      using Ptr = shared_ptr<DepthSenseGrabber>;
+      using ConstPtr = shared_ptr<const DepthSenseGrabber>;
 
       using sig_cb_depth_sense_point_cloud = void(const pcl::PointCloud<pcl::PointXYZ>::ConstPtr&);
       using sig_cb_depth_sense_point_cloud_rgba = void(const pcl::PointCloud<pcl::PointXYZRGBA>::ConstPtr&);
@@ -91,7 +92,7 @@ namespace pcl
       DepthSenseGrabber (const std::string& device_id = "");
 
       virtual
-      ~DepthSenseGrabber () throw ();
+      ~DepthSenseGrabber () noexcept;
 
       virtual void
       start ();
@@ -128,7 +129,7 @@ namespace pcl
         * The window size parameter is not relevant for `DepthSense_None`
         * filtering type. */
       void
-      enableTemporalFiltering (TemporalFilteringType type, size_t window_size = 1);
+      enableTemporalFiltering (TemporalFilteringType type, std::size_t window_size = 1);
 
       /** Disable temporal filtering. */
       void

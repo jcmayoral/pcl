@@ -62,14 +62,14 @@ pcl::PPFEstimation<PointInT, PointNT, PointOutT>::computeFeature (PointCloudOut 
   // Initialize output container - overwrite the sizes done by Feature::initCompute ()
   output.points.resize (indices_->size () * input_->points.size ());
   output.height = 1;
-  output.width = static_cast<uint32_t> (output.points.size ());
+  output.width = static_cast<std::uint32_t> (output.points.size ());
   output.is_dense = true;
 
   // Compute point pair features for every pair of points in the cloud
-  for (size_t index_i = 0; index_i < indices_->size (); ++index_i)
+  for (std::size_t index_i = 0; index_i < indices_->size (); ++index_i)
   {
-    size_t i = (*indices_)[index_i];
-    for (size_t j = 0 ; j < input_->points.size (); ++j)
+    std::size_t i = (*indices_)[index_i];
+    for (std::size_t j = 0 ; j < input_->points.size (); ++j)
     {
       PointOutT p;
       if (i != j)
@@ -92,7 +92,7 @@ pcl::PPFEstimation<PointInT, PointNT, PointOutT>::computeFeature (PointCloudOut 
           Eigen::Affine3f transform_mg (Eigen::Translation3f ( rotation_mg * ((-1) * model_reference_point)) * rotation_mg);
 
           Eigen::Vector3f model_point_transformed = transform_mg * model_point;
-          float angle = atan2f ( -model_point_transformed(2), model_point_transformed(1));
+          float angle = std::atan2 ( -model_point_transformed(2), model_point_transformed(1));
           if (std::sin (angle) * model_point_transformed(2) < 0.0f)
             angle *= (-1);
           p.alpha_m = -angle;

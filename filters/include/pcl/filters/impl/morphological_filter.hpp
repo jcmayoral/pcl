@@ -52,16 +52,17 @@
 #include <pcl/filters/morphological_filter.h>
 #include <pcl/octree/octree_search.h>
 
-///////////////////////////////////////////////////////////////////////////////////////////
+namespace pcl
+{
 template <typename PointT> void
-pcl::applyMorphologicalOperator (const typename pcl::PointCloud<PointT>::ConstPtr &cloud_in,
-                                 float resolution, const int morphological_operator,
-                                 pcl::PointCloud<PointT> &cloud_out)
+applyMorphologicalOperator (const typename pcl::PointCloud<PointT>::ConstPtr &cloud_in,
+                            float resolution, const int morphological_operator,
+                            pcl::PointCloud<PointT> &cloud_out)
 {
   if (cloud_in->empty ())
     return;
 
-  pcl::copyPointCloud<PointT, PointT> (*cloud_in, cloud_out);
+  pcl::copyPointCloud (*cloud_in, cloud_out);
 
   pcl::octree::OctreePointCloudSearch<PointT> tree (resolution);
 
@@ -75,7 +76,7 @@ pcl::applyMorphologicalOperator (const typename pcl::PointCloud<PointT>::ConstPt
     case MORPH_DILATE:
     case MORPH_ERODE:
     {
-      for (size_t p_idx = 0; p_idx < cloud_in->points.size (); ++p_idx)
+      for (std::size_t p_idx = 0; p_idx < cloud_in->points.size (); ++p_idx)
       {
         Eigen::Vector3f bbox_min, bbox_max;
         std::vector<int> pt_indices;
@@ -116,9 +117,9 @@ pcl::applyMorphologicalOperator (const typename pcl::PointCloud<PointT>::ConstPt
     {
       pcl::PointCloud<PointT> cloud_temp;
 
-      pcl::copyPointCloud<PointT, PointT> (*cloud_in, cloud_temp);
+      pcl::copyPointCloud (*cloud_in, cloud_temp);
 
-      for (size_t p_idx = 0; p_idx < cloud_temp.points.size (); ++p_idx)
+      for (std::size_t p_idx = 0; p_idx < cloud_temp.points.size (); ++p_idx)
       {
         Eigen::Vector3f bbox_min, bbox_max;
         std::vector<int> pt_indices;
@@ -155,7 +156,7 @@ pcl::applyMorphologicalOperator (const typename pcl::PointCloud<PointT>::ConstPt
 
       cloud_temp.swap (cloud_out);
 
-      for (size_t p_idx = 0; p_idx < cloud_temp.points.size (); ++p_idx)
+      for (std::size_t p_idx = 0; p_idx < cloud_temp.points.size (); ++p_idx)
       {
         Eigen::Vector3f bbox_min, bbox_max;
         std::vector<int> pt_indices;
@@ -202,7 +203,8 @@ pcl::applyMorphologicalOperator (const typename pcl::PointCloud<PointT>::ConstPt
   return;
 }
 
+} // namespace pcl
+
 #define PCL_INSTANTIATE_applyMorphologicalOperator(T) template PCL_EXPORTS void pcl::applyMorphologicalOperator<T> (const pcl::PointCloud<T>::ConstPtr &, float, const int, pcl::PointCloud<T> &);
 
 #endif  //#ifndef PCL_FILTERS_IMPL_MORPHOLOGICAL_FILTER_H_
-

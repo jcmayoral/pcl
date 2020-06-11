@@ -43,7 +43,7 @@
 #include <pcl/kdtree/kdtree.h>
 #include <flann/util/params.h>
 
-#include <boost/shared_array.hpp>
+#include <memory>
 
 // Forward declarations
 namespace flann
@@ -78,14 +78,14 @@ namespace pcl
       using PointCloud = typename KdTree<PointT>::PointCloud;
       using PointCloudConstPtr = typename KdTree<PointT>::PointCloudConstPtr;
 
-      using IndicesPtr = boost::shared_ptr<std::vector<int> >;
-      using IndicesConstPtr = boost::shared_ptr<const std::vector<int> >;
+      using IndicesPtr = shared_ptr<std::vector<int> >;
+      using IndicesConstPtr = shared_ptr<const std::vector<int> >;
 
       using FLANNIndex = ::flann::Index<Dist>;
 
       // Boost shared pointers
-      using Ptr = boost::shared_ptr<KdTreeFLANN<PointT, Dist> >;
-      using ConstPtr = boost::shared_ptr<const KdTreeFLANN<PointT, Dist> >;
+      using Ptr = shared_ptr<KdTreeFLANN<PointT, Dist> >;
+      using ConstPtr = shared_ptr<const KdTreeFLANN<PointT, Dist> >;
 
       /** \brief Default Constructor for KdTreeFLANN.
         * \param[in] sorted set to true if the application that the tree will be used for requires sorted nearest neighbor indices (default). False otherwise. 
@@ -207,14 +207,14 @@ namespace pcl
       getName () const override { return ("KdTreeFLANN"); }
 
       /** \brief A FLANN index object. */
-      boost::shared_ptr<FLANNIndex> flann_index_;
+      std::shared_ptr<FLANNIndex> flann_index_;
 
-      /** \brief Internal pointer to data. */
-      boost::shared_array<float> cloud_;
-      
+      /** \brief Internal pointer to data. TODO: replace with std::shared_ptr<float[]> with C++17*/
+      std::shared_ptr<float> cloud_;
+
       /** \brief mapping between internal and external indices. */
       std::vector<int> index_mapping_;
-      
+
       /** \brief whether the mapping between internal and external indices is identity */
       bool identity_mapping_;
 

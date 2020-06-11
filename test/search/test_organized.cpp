@@ -35,7 +35,7 @@
  */
 /** \author Julius Kammerl (julius@kammerl.de)*/
 
-#include <gtest/gtest.h>
+#include <pcl/test/gtest.h>
 
 #include <vector>
 
@@ -140,7 +140,7 @@ TEST (PCL, Organized_Neighbor_Pointcloud_Nearest_K_Neighbour_Search)
 
 
     // push all points and their distance to the search point into a priority queue - bruteforce approach.
-    for (size_t i = 0; i < cloudIn->points.size (); i++)
+    for (std::size_t i = 0; i < cloudIn->points.size (); i++)
     {
       double pointDist = ((cloudIn->points[i].x - searchPoint.x) * (cloudIn->points[i].x - searchPoint.x) +
                           (cloudIn->points[i].y - searchPoint.y) * (cloudIn->points[i].y - searchPoint.y) +
@@ -168,7 +168,7 @@ TEST (PCL, Organized_Neighbor_Pointcloud_Nearest_K_Neighbour_Search)
     ASSERT_EQ ( k_indices.size() , k_indices_bruteforce.size() );
 
     // compare nearest neighbor results of organized search  with bruteforce search
-    for (size_t i = 0; i < k_indices.size (); i++)
+    for (std::size_t i = 0; i < k_indices.size (); i++)
     {
       ASSERT_EQ ( k_indices[i] , k_indices_bruteforce.back() );
       EXPECT_NEAR (k_sqr_distances[i], k_sqr_distances_bruteforce.back(), 1e-4);
@@ -188,12 +188,6 @@ TEST (PCL, Organized_Neighbor_Pointcloud_Neighbours_Within_Radius_Search)
   srand (int (time (nullptr)));
 
   search::OrganizedNeighbor<PointXYZ> organizedNeighborSearch;
-
-  std::vector<int> k_indices;
-  std::vector<float> k_sqr_distances;
-
-  std::vector<int> k_indices_bruteforce;
-  std::vector<float> k_sqr_distances_bruteforce;
 
   // typical focal length from kinect
   constexpr double oneOverFocalLength = 0.0018;
@@ -230,10 +224,10 @@ TEST (PCL, Organized_Neighbor_Pointcloud_Neighbours_Within_Radius_Search)
     double searchRadius = 1.0 * (double (rand ()) / double (RAND_MAX));
 
     // bruteforce radius search
-    vector<int> cloudSearchBruteforce;
+    std::vector<int> cloudSearchBruteforce;
     cloudSearchBruteforce.clear();
 
-    for (size_t i = 0; i < cloudIn->points.size (); i++)
+    for (std::size_t i = 0; i < cloudIn->points.size (); i++)
     {
       pointDist = sqrt (
                         (cloudIn->points[i].x - searchPoint.x) * (cloudIn->points[i].x - searchPoint.x)
@@ -285,11 +279,6 @@ TEST (PCL, Organized_Neighbor_Pointcloud_Neighbours_Within_Radius_Search)
 
       ++current;
     }
-
-    for (size_t i = 0; i < cloudSearchBruteforce.size (); i++) 
-      for (size_t j = 0; j < cloudNWRSearch.size (); j++) 
-        if (cloudNWRSearch[i]== cloudSearchBruteforce[j])
-          break;
 
     ASSERT_EQ (cloudNWRRadius.size() , cloudSearchBruteforce.size ());
 

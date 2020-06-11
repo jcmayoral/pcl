@@ -37,15 +37,15 @@
  *
  */
 
-#ifndef PCL_SEGMENTATION_REGION_GROWING_HPP_
-#define PCL_SEGMENTATION_REGION_GROWING_HPP_
+#pragma once
 
 #include <pcl/segmentation/region_growing.h>
 
-#include <pcl/search/search.h>
-#include <pcl/search/kdtree.h>
 #include <pcl/point_cloud.h>
 #include <pcl/point_types.h>
+#include <pcl/common/point_tests.h> // for pcl::isFinite
+#include <pcl/search/search.h>
+#include <pcl/search/kdtree.h>
 
 #include <queue>
 #include <list>
@@ -276,13 +276,13 @@ pcl::RegionGrowing<PointT, NormalT>::extract (std::vector <pcl::PointIndices>& c
 
   clusters.resize (clusters_.size ());
   std::vector<pcl::PointIndices>::iterator cluster_iter_input = clusters.begin ();
-  for (std::vector<pcl::PointIndices>::const_iterator cluster_iter = clusters_.begin (); cluster_iter != clusters_.end (); cluster_iter++)
+  for (std::vector<pcl::PointIndices>::const_iterator cluster_iter = clusters_.begin (); cluster_iter != clusters_.end (); ++cluster_iter)
   {
     if ((static_cast<int> (cluster_iter->indices.size ()) >= min_pts_per_cluster_) &&
         (static_cast<int> (cluster_iter->indices.size ()) <= max_pts_per_cluster_))
     {
       *cluster_iter_input = *cluster_iter;
-      cluster_iter_input++;
+      ++cluster_iter_input;
     }
   }
 
@@ -444,7 +444,7 @@ pcl::RegionGrowing<PointT, NormalT>::growRegion (int initial_seed, int segment_n
     curr_seed = seeds.front ();
     seeds.pop ();
 
-    size_t i_nghbr = 0;
+    std::size_t i_nghbr = 0;
     while ( i_nghbr < neighbour_number_ && i_nghbr < point_neighbours_[curr_seed].size () )
     {
       int index = point_neighbours_[curr_seed][i_nghbr];
@@ -498,7 +498,7 @@ pcl::RegionGrowing<PointT, NormalT>::validatePoint (int initial_seed, int point,
   if (smooth_mode_flag_ == true)
   {
     Eigen::Map<Eigen::Vector3f> nghbr_normal (static_cast<float*> (normals_->points[nghbr].normal));
-    float dot_product = fabsf (nghbr_normal.dot (initial_normal));
+    float dot_product = std::abs (nghbr_normal.dot (initial_normal));
     if (dot_product < cosine_threshold)
     {
       return (false);
@@ -508,7 +508,7 @@ pcl::RegionGrowing<PointT, NormalT>::validatePoint (int initial_seed, int point,
   {
     Eigen::Map<Eigen::Vector3f> nghbr_normal (static_cast<float*> (normals_->points[nghbr].normal));
     Eigen::Map<Eigen::Vector3f> initial_seed_normal (static_cast<float*> (normals_->points[initial_seed].normal));
-    float dot_product = fabsf (nghbr_normal.dot (initial_seed_normal));
+    float dot_product = std::abs (nghbr_normal.dot (initial_seed_normal));
     if (dot_product < cosine_threshold)
       return (false);
   }
@@ -527,7 +527,7 @@ pcl::RegionGrowing<PointT, NormalT>::validatePoint (int initial_seed, int point,
   data_1[2] = input_->points[nghbr].data[2];
   data_1[3] = input_->points[nghbr].data[3];
   Eigen::Map<Eigen::Vector3f> nghbr_point (static_cast<float*> (data_1));
-  float residual = fabsf (initial_normal.dot (initial_point - nghbr_point));
+  float residual = std::abs (initial_normal.dot (initial_point - nghbr_point));
   if (residual_flag_ && residual > residual_threshold_)
     is_a_seed = false;
 
@@ -614,7 +614,7 @@ pcl::RegionGrowing<PointT, NormalT>::getSegmentFromPoint (int index, pcl::PointI
     for (auto i_segment = clusters_.cbegin (); i_segment != clusters_.cend (); i_segment++)
     {
       bool segment_was_found = false;
-      for (size_t i_point = 0; i_point < i_segment->indices.size (); i_point++)
+      for (std::size_t i_point = 0; i_point < i_segment->indices.size (); i_point++)
       {
         if (i_segment->indices[i_point] == index)
         {
@@ -647,7 +647,7 @@ pcl::RegionGrowing<PointT, NormalT>::getColoredCloud ()
 
     srand (static_cast<unsigned int> (time (nullptr)));
     std::vector<unsigned char> colors;
-    for (size_t i_segment = 0; i_segment < clusters_.size (); i_segment++)
+    for (std::size_t i_segment = 0; i_segment < clusters_.size (); i_segment++)
     {
       colors.push_back (static_cast<unsigned char> (rand () % 256));
       colors.push_back (static_cast<unsigned char> (rand () % 256));
@@ -657,7 +657,7 @@ pcl::RegionGrowing<PointT, NormalT>::getColoredCloud ()
     colored_cloud->width = input_->width;
     colored_cloud->height = input_->height;
     colored_cloud->is_dense = input_->is_dense;
-    for (size_t i_point = 0; i_point < input_->points.size (); i_point++)
+    for (std::size_t i_point = 0; i_point < input_->points.size (); i_point++)
     {
       pcl::PointXYZRGB point;
       point.x = *(input_->points[i_point].data);
@@ -699,7 +699,7 @@ pcl::RegionGrowing<PointT, NormalT>::getColoredCloudRGBA ()
 
     srand (static_cast<unsigned int> (time (nullptr)));
     std::vector<unsigned char> colors;
-    for (size_t i_segment = 0; i_segment < clusters_.size (); i_segment++)
+    for (std::size_t i_segment = 0; i_segment < clusters_.size (); i_segment++)
     {
       colors.push_back (static_cast<unsigned char> (rand () % 256));
       colors.push_back (static_cast<unsigned char> (rand () % 256));
@@ -709,7 +709,7 @@ pcl::RegionGrowing<PointT, NormalT>::getColoredCloudRGBA ()
     colored_cloud->width = input_->width;
     colored_cloud->height = input_->height;
     colored_cloud->is_dense = input_->is_dense;
-    for (size_t i_point = 0; i_point < input_->points.size (); i_point++)
+    for (std::size_t i_point = 0; i_point < input_->points.size (); i_point++)
     {
       pcl::PointXYZRGBA point;
       point.x = *(input_->points[i_point].data);
@@ -741,4 +741,3 @@ pcl::RegionGrowing<PointT, NormalT>::getColoredCloudRGBA ()
 
 #define PCL_INSTANTIATE_RegionGrowing(T) template class pcl::RegionGrowing<T, pcl::Normal>;
 
-#endif    // PCL_SEGMENTATION_REGION_GROWING_HPP_

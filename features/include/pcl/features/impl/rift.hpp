@@ -65,7 +65,7 @@ pcl::RIFTEstimation<PointInT, GradientT, PointOutT>::computeRIFT (
 
   // Compute the RIFT descriptor
   rift_descriptor.setZero ();
-  for (size_t idx = 0; idx < indices.size (); ++idx)
+  for (std::size_t idx = 0; idx < indices.size (); ++idx)
   {
     // Compute the gradient magnitude and orientation (relative to the center point)
     pcl::Vector3fMapConst point = cloud.points[indices[idx]].getVector3fMap ();
@@ -96,7 +96,7 @@ pcl::RIFTEstimation<PointInT, GradientT, PointOutT>::computeRIFT (
       for (int d_idx = d_idx_min; d_idx <= d_idx_max; ++d_idx)
       {
         // To avoid boundary effects, use linear interpolation when updating each bin 
-        float w = (1.0f - fabsf (d - static_cast<float> (d_idx))) * (1.0f - fabsf (g - static_cast<float> (g_idx)));
+        float w = (1.0f - std::abs (d - static_cast<float> (d_idx))) * (1.0f - std::abs (g - static_cast<float> (g_idx)));
 
         rift_descriptor (d_idx, g_idx_wrapped) += w * gradient_magnitude;
       }
@@ -162,7 +162,7 @@ pcl::RIFTEstimation<PointInT, GradientT, PointOutT>::computeFeature (PointCloudO
   std::vector<float> nn_dist_sqr;
  
   // Iterating over the entire index vector
-  for (size_t idx = 0; idx < indices_->size (); ++idx)
+  for (std::size_t idx = 0; idx < indices_->size (); ++idx)
   {
     // Find neighbors within the search radius
     tree_->radiusSearch ((*indices_)[idx], search_radius_, nn_indices, nn_dist_sqr);
@@ -170,11 +170,8 @@ pcl::RIFTEstimation<PointInT, GradientT, PointOutT>::computeFeature (PointCloudO
     // Compute the RIFT descriptor
     computeRIFT (*surface_, *gradient_, (*indices_)[idx], static_cast<float> (search_radius_), nn_indices, nn_dist_sqr, rift_descriptor);
 
-    // Copy into the resultant cloud
-    size_t bin = 0;
-    for (Eigen::Index g_bin = 0; g_bin < rift_descriptor.cols (); ++g_bin)
-      for (Eigen::Index d_bin = 0; d_bin < rift_descriptor.rows (); ++d_bin)
-        output.points[idx].histogram[bin++] = rift_descriptor (d_bin, g_bin);
+    // Default layout is column major, copy elementwise
+    std::copy_n (rift_descriptor.data (), rift_descriptor.size (), output.points[idx].histogram);
   }
 }
 

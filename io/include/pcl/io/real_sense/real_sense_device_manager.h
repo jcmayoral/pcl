@@ -37,15 +37,19 @@
 
 #pragma once
 
-#include <pcl/pcl_exports.h>
-
 #include <pxcsession.h>
 #include <pxccapture.h>
 #include <pxccapturemanager.h>
 
-#include <boost/utility.hpp>
+#include <pcl/memory.h>  // for pcl::shared_ptr, pcl::weak_ptr
+#include <pcl/pcl_exports.h>  // for PCL_EXPORTS
 
-#include <memory>
+#include <boost/core/noncopyable.hpp>  // for boost::noncopyable
+
+#include <cstddef>  // for std::size_t
+#include <mutex>  // for std::lock_guard, std::mutex
+#include <string>  // for std::string
+#include <vector>  // for std::vector
 
 namespace pcl
 {
@@ -80,7 +84,7 @@ namespace pcl
             return (instance);
           }
 
-          inline size_t
+          inline std::size_t
           getNumDevices ()
           {
             return (device_list_.size ());
@@ -90,7 +94,7 @@ namespace pcl
           captureDevice ();
 
           std::shared_ptr<RealSenseDevice>
-          captureDevice (size_t index);
+          captureDevice (std::size_t index);
 
           std::shared_ptr<RealSenseDevice>
           captureDevice (const std::string& sn);
@@ -104,7 +108,7 @@ namespace pcl
             pxcUID iuid;
             pxcI32 didx;
             std::string serial;
-            std::weak_ptr<RealSenseDevice> device_ptr;
+            weak_ptr<RealSenseDevice> device_ptr;
             inline bool isCaptured () { return (!device_ptr.expired ()); }
           };
 
@@ -132,8 +136,7 @@ namespace pcl
       {
 
         public:
-
-          using Ptr = std::shared_ptr<RealSenseDevice>;
+          using Ptr = pcl::shared_ptr<RealSenseDevice>;
 
           inline const std::string&
           getSerialNumber () { return (device_id_); }

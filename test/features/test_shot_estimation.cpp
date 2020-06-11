@@ -37,7 +37,7 @@
  *
  */
 
-#include <gtest/gtest.h>
+#include <pcl/test/gtest.h>
 #include <pcl/point_cloud.h>
 #include <pcl/features/normal_3d_omp.h>
 #include <pcl/io/pcd_io.h>
@@ -54,7 +54,7 @@ using namespace std;
 using KdTreePtr = search::KdTree<PointXYZ>::Ptr;
 
 PointCloud<PointXYZ> cloud;
-vector<int> indices;
+std::vector<int> indices;
 KdTreePtr tree;
 
 ///////////////////////////////////////////////////////////////////////////////////
@@ -70,8 +70,8 @@ template <typename PointT> void
 checkDesc(const pcl::PointCloud<PointT>& d0, const pcl::PointCloud<PointT>& d1)
 {
   ASSERT_EQ (d0.size (), d1.size ());
-  for (size_t i = 0; i < d1.size (); ++i)
-    for (size_t j = 0; j < d0.points[i].descriptor.size(); ++j)
+  for (std::size_t i = 0; i < d1.size (); ++i)
+    for (std::size_t j = 0; j < d0.points[i].descriptor.size(); ++j)
       ASSERT_EQ (d0.points[i].descriptor[j], d1.points[i].descriptor[j]);
 }
 
@@ -80,8 +80,8 @@ template <> void
 checkDesc<SHOT352>(const pcl::PointCloud<SHOT352>& d0, const pcl::PointCloud<SHOT352>& d1)
 {
   ASSERT_EQ (d0.size (), d1.size ());
-  for (size_t i = 0; i < d1.size (); ++i)
-    for (size_t j = 0; j < 352; ++j)
+  for (std::size_t i = 0; i < d1.size (); ++i)
+    for (std::size_t j = 0; j < 352; ++j)
       ASSERT_EQ (d0.points[i].descriptor[j], d1.points[i].descriptor[j]);
 }
 
@@ -90,8 +90,8 @@ template <> void
 checkDesc<SHOT1344>(const pcl::PointCloud<SHOT1344>& d0, const pcl::PointCloud<SHOT1344>& d1)
 {
   ASSERT_EQ (d0.size (), d1.size ());
-  for (size_t i = 0; i < d1.size (); ++i)
-    for (size_t j = 0; j < 1344; ++j)
+  for (std::size_t i = 0; i < d1.size (); ++i)
+    for (std::size_t j = 0; j < 1344; ++j)
       ASSERT_EQ (d0.points[i].descriptor[j], d1.points[i].descriptor[j]);
 }
 
@@ -100,8 +100,8 @@ template <> void
 checkDesc<ShapeContext1980>(const pcl::PointCloud<ShapeContext1980>& d0, const pcl::PointCloud<ShapeContext1980>& d1)
 {
   ASSERT_EQ (d0.size (), d1.size ());
-  for (size_t i = 0; i < d1.size (); ++i)
-    for (size_t j = 0; j < 1980; ++j)
+  for (std::size_t i = 0; i < d1.size (); ++i)
+    for (std::size_t j = 0; j < 1980; ++j)
       ASSERT_EQ (d0.points[i].descriptor[j], d1.points[i].descriptor[j]);
 }
 
@@ -110,8 +110,8 @@ template <> void
 checkDesc<UniqueShapeContext1960>(const pcl::PointCloud<UniqueShapeContext1960>& d0, const pcl::PointCloud<UniqueShapeContext1960>& d1)
 {
   ASSERT_EQ (d0.size (), d1.size ());
-  for (size_t i = 0; i < d1.size (); ++i)
-    for (size_t j = 0; j < 1960; ++j)
+  for (std::size_t i = 0; i < d1.size (); ++i)
+    for (std::size_t j = 0; j < 1960; ++j)
       ASSERT_EQ (d0.points[i].descriptor[j], d1.points[i].descriptor[j]);
 }
 
@@ -257,7 +257,7 @@ testSHOTIndicesAndSearchSurface (const typename PointCloud<PointT>::Ptr & points
   PointCloud<OutputT> output3, output4;
 
   pcl::IndicesPtr indices2 (new pcl::Indices (0));
-  for (size_t i = 0; i < (indices->size ()/2); ++i)
+  for (std::size_t i = 0; i < (indices->size ()/2); ++i)
     indices2->push_back (static_cast<int> (i));
 
   // Compute with all points as search surface + the specified sub-cloud as "input" but for only a subset of indices
@@ -292,7 +292,7 @@ testSHOTLocalReferenceFrame (const typename PointCloud<PointT>::Ptr & points,
   copyPointCloud (*points, *indices, *subpoints);
 
   pcl::IndicesPtr indices2 (new pcl::Indices (0));
-  for (size_t i = 0; i < (indices->size ()/2); ++i)
+  for (std::size_t i = 0; i < (indices->size ()/2); ++i)
     indices2->push_back (static_cast<int> (i));
   //
   // Test an external computation for the local reference frames
@@ -371,7 +371,7 @@ struct SHOTShapeTest<SHOTEstimationOMP<PointXYZ, Normal, SHOT352> >
 using SHOTEstimatorTypes = ::testing::Types
         <SHOTEstimation<PointXYZ, Normal, SHOT352>,
          SHOTEstimationOMP<PointXYZ, Normal, SHOT352> >;
-TYPED_TEST_CASE (SHOTShapeTest, SHOTEstimatorTypes);
+TYPED_TEST_SUITE (SHOTShapeTest, SHOTEstimatorTypes);
 
 // This is a copy of the old SHOTShapeEstimation test which will now
 // be applied to both SHOTEstimation and SHOTEstimationOMP
@@ -463,7 +463,7 @@ TYPED_TEST (SHOTShapeTest, Estimation)
   // Test results when setIndices and/or setSearchSurface are used
 
   pcl::IndicesPtr test_indices (new pcl::Indices (0));
-  for (size_t i = 0; i < cloud.size (); i+=3)
+  for (std::size_t i = 0; i < cloud.size (); i+=3)
     test_indices->push_back (static_cast<int> (i));
 
   //testSHOTIndicesAndSearchSurface<SHOTEstimation<PointXYZ, Normal, SHOT>, PointXYZ, Normal, SHOT> (cloud.makeShared (), normals, test_indices);
@@ -523,7 +523,7 @@ TEST (PCL, GenericSHOTShapeEstimation)
 
   // Test results when setIndices and/or setSearchSurface are used
   pcl::IndicesPtr test_indices (new pcl::Indices (0));
-  for (size_t i = 0; i < cloud.size (); i+=3)
+  for (std::size_t i = 0; i < cloud.size (); i+=3)
     test_indices->push_back (static_cast<int> (i));
 
   testSHOTIndicesAndSearchSurface<SHOTEstimation<PointXYZ, Normal, SHOT>, PointXYZ, Normal, SHOT> (cloud.makeShared (), normals, test_indices, shapeStep_);
@@ -560,7 +560,7 @@ struct SHOTShapeAndColorTest<SHOTColorEstimationOMP<PointXYZRGBA, Normal, SHOT13
 using SHOTColorEstimatorTypes= ::testing::Types
         <SHOTColorEstimation<PointXYZRGBA, Normal, SHOT1344>,
          SHOTColorEstimationOMP<PointXYZRGBA, Normal, SHOT1344> >;
-TYPED_TEST_CASE (SHOTShapeAndColorTest, SHOTColorEstimatorTypes);
+TYPED_TEST_SUITE (SHOTShapeAndColorTest, SHOTColorEstimatorTypes);
 
 // This is a copy of the old SHOTShapeAndColorEstimation test which will now
 // be applied to both SHOTColorEstimation and SHOTColorEstimationOMP
@@ -677,7 +677,7 @@ TYPED_TEST (SHOTShapeAndColorTest, Estimation)
 
   // Test results when setIndices and/or setSearchSurface are used
   pcl::IndicesPtr test_indices (new pcl::Indices (0));
-  for (size_t i = 0; i < cloud.size (); i+=3)
+  for (std::size_t i = 0; i < cloud.size (); i+=3)
     test_indices->push_back (static_cast<int> (i));
 
   //testSHOTIndicesAndSearchSurface<SHOTEstimation<PointXYZRGBA, Normal, SHOT>, PointXYZRGBA, Normal, SHOT> (cloudWithColors.makeShared (), normals, test_indices);
@@ -762,7 +762,7 @@ TEST (PCL,3DSCEstimation)
 
   // Test results when setIndices and/or setSearchSurface are used
   pcl::IndicesPtr test_indices (new pcl::Indices (0));
-  for (size_t i = 0; i < cloud.size (); i++)
+  for (std::size_t i = 0; i < cloud.size (); i++)
     test_indices->push_back (static_cast<int> (i));
 
   testSHOTIndicesAndSearchSurface<ShapeContext3DEstimation<PointXYZ, Normal, ShapeContext1980>, PointXYZ, Normal, ShapeContext1980> (cloudptr, normals, test_indices);
@@ -815,7 +815,7 @@ TEST (PCL, USCEstimation)
 
   // Test results when setIndices and/or setSearchSurface are used
   pcl::IndicesPtr test_indices (new pcl::Indices (0));
-  for (size_t i = 0; i < cloud.size (); i+=3)
+  for (std::size_t i = 0; i < cloud.size (); i+=3)
     test_indices->push_back (static_cast<int> (i));
 
   PointCloud<Normal>::Ptr normals (new PointCloud<Normal> ());
@@ -840,7 +840,7 @@ main (int argc, char** argv)
   }
 
   indices.resize (cloud.points.size ());
-  for (size_t i = 0; i < indices.size (); ++i)
+  for (std::size_t i = 0; i < indices.size (); ++i)
     indices[i] = static_cast<int> (i);
 
   tree.reset (new search::KdTree<PointXYZ> (false));

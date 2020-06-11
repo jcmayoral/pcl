@@ -33,8 +33,8 @@ segmentAndClassify (typename pcl::rec_3d_framework::GlobalNNPipeline<DistT, Poin
     camera.onKeyboardEvent (event);
   };
   vis.registerKeyboardCallback (keyboard_cb);
-  size_t previous_cluster_size = 0;
-  size_t previous_categories_size = 0;
+  std::size_t previous_cluster_size = 0;
+  std::size_t previous_categories_size = 0;
 
   float Z_DIST_ = 1.25f;
   float text_scale = 0.015f;
@@ -68,7 +68,7 @@ segmentAndClassify (typename pcl::rec_3d_framework::GlobalNNPipeline<DistT, Poin
     vis.removePointCloud ("frame");
     vis.addPointCloud<OpenNIFrameSource::PointT> (frame, "frame");
 
-    for (size_t i = 0; i < previous_cluster_size; i++)
+    for (std::size_t i = 0; i < previous_cluster_size; i++)
     {
       std::stringstream cluster_name;
       cluster_name << "cluster_" << i;
@@ -78,7 +78,7 @@ segmentAndClassify (typename pcl::rec_3d_framework::GlobalNNPipeline<DistT, Poin
       vis.removeShape (cluster_name.str ());
     }
 
-    for (size_t i = 0; i < previous_categories_size; i++)
+    for (std::size_t i = 0; i < previous_categories_size; i++)
     {
       std::stringstream cluster_text;
       cluster_text << "cluster_" << i << "_text";
@@ -88,7 +88,7 @@ segmentAndClassify (typename pcl::rec_3d_framework::GlobalNNPipeline<DistT, Poin
     previous_categories_size = 0;
     float dist_ = 0.03f;
 
-    for (size_t i = 0; i < clusters.size (); i++)
+    for (std::size_t i = 0; i < clusters.size (); i++)
     {
       std::stringstream cluster_name;
       cluster_name << "cluster_" << i;
@@ -107,7 +107,7 @@ segmentAndClassify (typename pcl::rec_3d_framework::GlobalNNPipeline<DistT, Poin
 
       Eigen::Vector4f centroid;
       pcl::compute3DCentroid (*xyz_points, indices[i].indices, centroid);
-      for (size_t kk = 0; kk < categories.size (); kk++)
+      for (std::size_t kk = 0; kk < categories.size (); kk++)
       {
 
         pcl::PointXYZ pos;
@@ -151,7 +151,7 @@ main (int argc, char ** argv)
   //pcl::console::parse_argument (argc, argv, "-z_dist", chop_at_z_);
   //pcl::console::parse_argument (argc, argv, "-tesselation_level", views_level_);
 
-  boost::shared_ptr<pcl::rec_3d_framework::MeshSource<pcl::PointXYZ> > mesh_source (new pcl::rec_3d_framework::MeshSource<pcl::PointXYZ>);
+  std::shared_ptr<pcl::rec_3d_framework::MeshSource<pcl::PointXYZ>> mesh_source (new pcl::rec_3d_framework::MeshSource<pcl::PointXYZ>);
   mesh_source->setPath (path);
   mesh_source->setResolution (150);
   mesh_source->setTesselationLevel (1);
@@ -160,10 +160,11 @@ main (int argc, char ** argv)
   mesh_source->setModelScale (1.f);
   mesh_source->generate (training_dir);
 
-  boost::shared_ptr<pcl::rec_3d_framework::Source<pcl::PointXYZ> > cast_source;
-  cast_source = boost::static_pointer_cast<pcl::rec_3d_framework::MeshSource<pcl::PointXYZ> > (mesh_source);
+  std::shared_ptr<pcl::rec_3d_framework::Source<pcl::PointXYZ>> cast_source (
+    std::static_pointer_cast<pcl::rec_3d_framework::MeshSource<pcl::PointXYZ>> (mesh_source)
+  );
 
-  boost::shared_ptr<pcl::rec_3d_framework::PreProcessorAndNormalEstimator<pcl::PointXYZ, pcl::Normal> > normal_estimator;
+  std::shared_ptr<pcl::rec_3d_framework::PreProcessorAndNormalEstimator<pcl::PointXYZ, pcl::Normal>> normal_estimator;
   normal_estimator.reset (new pcl::rec_3d_framework::PreProcessorAndNormalEstimator<pcl::PointXYZ, pcl::Normal>);
   normal_estimator->setCMR (true);
   normal_estimator->setDoVoxelGrid (true);
@@ -172,12 +173,14 @@ main (int argc, char ** argv)
 
   if (desc_name == "vfh")
   {
-    boost::shared_ptr<pcl::rec_3d_framework::VFHEstimation<pcl::PointXYZ, pcl::VFHSignature308> > vfh_estimator;
-    vfh_estimator.reset (new pcl::rec_3d_framework::VFHEstimation<pcl::PointXYZ, pcl::VFHSignature308>);
+    std::shared_ptr<pcl::rec_3d_framework::VFHEstimation<pcl::PointXYZ, pcl::VFHSignature308>> vfh_estimator (
+      new pcl::rec_3d_framework::VFHEstimation<pcl::PointXYZ, pcl::VFHSignature308>
+    );
     vfh_estimator->setNormalEstimator (normal_estimator);
 
-    boost::shared_ptr<pcl::rec_3d_framework::GlobalEstimator<pcl::PointXYZ, pcl::VFHSignature308> > cast_estimator;
-    cast_estimator = boost::dynamic_pointer_cast<pcl::rec_3d_framework::VFHEstimation<pcl::PointXYZ, pcl::VFHSignature308> > (vfh_estimator);
+    std::shared_ptr<pcl::rec_3d_framework::GlobalEstimator<pcl::PointXYZ, pcl::VFHSignature308>> cast_estimator (
+      std::dynamic_pointer_cast<pcl::rec_3d_framework::VFHEstimation<pcl::PointXYZ, pcl::VFHSignature308>> (vfh_estimator)
+    );
 
     pcl::rec_3d_framework::GlobalNNPipeline<flann::L1, pcl::PointXYZ, pcl::VFHSignature308> global;
     global.setDataSource (cast_source);
@@ -192,12 +195,14 @@ main (int argc, char ** argv)
 
   if (desc_name == "cvfh")
   {
-    boost::shared_ptr<pcl::rec_3d_framework::CVFHEstimation<pcl::PointXYZ, pcl::VFHSignature308> > vfh_estimator;
-    vfh_estimator.reset (new pcl::rec_3d_framework::CVFHEstimation<pcl::PointXYZ, pcl::VFHSignature308>);
+    std::shared_ptr<pcl::rec_3d_framework::CVFHEstimation<pcl::PointXYZ, pcl::VFHSignature308>> vfh_estimator (
+      new pcl::rec_3d_framework::CVFHEstimation<pcl::PointXYZ, pcl::VFHSignature308>
+    );
     vfh_estimator->setNormalEstimator (normal_estimator);
 
-    boost::shared_ptr<pcl::rec_3d_framework::GlobalEstimator<pcl::PointXYZ, pcl::VFHSignature308> > cast_estimator;
-    cast_estimator = boost::dynamic_pointer_cast<pcl::rec_3d_framework::CVFHEstimation<pcl::PointXYZ, pcl::VFHSignature308> > (vfh_estimator);
+    std::shared_ptr<pcl::rec_3d_framework::GlobalEstimator<pcl::PointXYZ, pcl::VFHSignature308>> cast_estimator (
+      std::dynamic_pointer_cast<pcl::rec_3d_framework::CVFHEstimation<pcl::PointXYZ, pcl::VFHSignature308>> (vfh_estimator)
+    );
 
     pcl::rec_3d_framework::GlobalNNPipeline<Metrics::HistIntersectionUnionDistance, pcl::PointXYZ, pcl::VFHSignature308> global;
     global.setDataSource (cast_source);
@@ -212,11 +217,13 @@ main (int argc, char ** argv)
 
   if (desc_name == "esf")
   {
-    boost::shared_ptr<pcl::rec_3d_framework::ESFEstimation<pcl::PointXYZ, pcl::ESFSignature640> > estimator;
-    estimator.reset (new pcl::rec_3d_framework::ESFEstimation<pcl::PointXYZ, pcl::ESFSignature640>);
+    std::shared_ptr<pcl::rec_3d_framework::ESFEstimation<pcl::PointXYZ, pcl::ESFSignature640>> estimator (
+      new pcl::rec_3d_framework::ESFEstimation<pcl::PointXYZ, pcl::ESFSignature640>
+    );
 
-    boost::shared_ptr<pcl::rec_3d_framework::GlobalEstimator<pcl::PointXYZ, pcl::ESFSignature640> > cast_estimator;
-    cast_estimator = boost::dynamic_pointer_cast<pcl::rec_3d_framework::ESFEstimation<pcl::PointXYZ, pcl::ESFSignature640> > (estimator);
+    std::shared_ptr<pcl::rec_3d_framework::GlobalEstimator<pcl::PointXYZ, pcl::ESFSignature640>> cast_estimator (
+      std::dynamic_pointer_cast<pcl::rec_3d_framework::ESFEstimation<pcl::PointXYZ, pcl::ESFSignature640>> (estimator)
+    );
 
     pcl::rec_3d_framework::GlobalNNPipeline<flann::L1, pcl::PointXYZ, pcl::ESFSignature640> global;
     global.setDataSource (cast_source);

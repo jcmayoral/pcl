@@ -8,6 +8,7 @@
 #include "pcl/recognition/face_detection/rf_face_detector_trainer.h"
 #include "pcl/recognition/face_detection/face_common.h"
 #include "pcl/io/pcd_io.h"
+#include <pcl/memory.h>  // for dynamic_pointer_cast
 #include "pcl/ml/dt/decision_tree_trainer.h"
 #include "pcl/ml/dt/decision_tree_evaluator.h"
 #include "pcl/ml/dt/decision_forest_trainer.h"
@@ -21,6 +22,7 @@
 #include "pcl/filters/voxel_grid.h"
 #include <pcl/recognition/hv/hv_papazov.h>
 #include <pcl/features/normal_3d.h>
+
 
 void pcl::RFFaceDetectorTrainer::trainWithDataProvider()
 {
@@ -58,7 +60,7 @@ void pcl::RFFaceDetectorTrainer::trainWithDataProvider()
 
   dtdp->initialize (directory_);
 
-  auto cast_dtdp = boost::dynamic_pointer_cast<pcl::DecisionTreeTrainerDataProvider<face_detection::FeatureType, std::vector<face_detection::TrainingExample>, float, int, NodeType>> (dtdp);
+  auto cast_dtdp = dynamic_pointer_cast<pcl::DecisionTreeTrainerDataProvider<face_detection::FeatureType, std::vector<face_detection::TrainingExample>, float, int, NodeType>> (dtdp);
   dft.setDecisionTreeDataProvider (cast_dtdp);
 
   pcl::DecisionForest<NodeType> forest;
@@ -81,12 +83,12 @@ void pcl::RFFaceDetectorTrainer::faceVotesClustering()
   std::vector < Eigen::Vector3f > clusters_mean;
   std::vector < std::vector<int> > votes_indices;
 
-  for (size_t i = 0; i < head_center_votes_.size (); i++)
+  for (std::size_t i = 0; i < head_center_votes_.size (); i++)
   {
     Eigen::Vector3f center_vote = head_center_votes_[i];
     std::vector<bool> valid_in_cluster (clusters_mean.size (), false);
     bool found = false;
-    for (size_t j = 0; j < clusters_mean.size () /*&& !found*/; j++)
+    for (std::size_t j = 0; j < clusters_mean.size () /*&& !found*/; j++)
     {
       float sq_norm = (clusters_mean[j] - center_vote).squaredNorm ();
       if (sq_norm < large_radius)
@@ -114,8 +116,8 @@ void pcl::RFFaceDetectorTrainer::faceVotesClustering()
 
     //get the largest biggest cluster and put if there
     int idx = -1;
-    size_t biggest_num = 0;
-    for (size_t j = 0; j < clusters_mean.size () /*&& !found*/; j++)
+    std::size_t biggest_num = 0;
+    for (std::size_t j = 0; j < clusters_mean.size () /*&& !found*/; j++)
     {
       if ((votes_indices[j].size () > biggest_num) && (valid_in_cluster[j]))
       {
@@ -137,7 +139,7 @@ void pcl::RFFaceDetectorTrainer::faceVotesClustering()
   std::cout << "Number of clusters:" << clusters_mean.size () << " votes:" << head_center_votes_.size () << std::endl;
 
   int valid = 0;
-  for (size_t i = 0; i < clusters_mean.size (); i++)
+  for (std::size_t i = 0; i < clusters_mean.size (); i++)
   {
     //ignore this cluster
     if (votes_indices[i].size () < min_votes_size_)
@@ -151,7 +153,7 @@ void pcl::RFFaceDetectorTrainer::faceVotesClustering()
       mean.setZero ();
       int good_votes = 0;
       new_cluster.clear ();
-      for (size_t j = 0; j < votes_indices[i].size (); j++)
+      for (std::size_t j = 0; j < votes_indices[i].size (); j++)
       {
         Eigen::Vector3f center_vote = head_center_votes_[votes_indices[i][j]];
         float sq_norm = (clusters_mean[i] - center_vote).squaredNorm ();
@@ -181,7 +183,7 @@ void pcl::RFFaceDetectorTrainer::faceVotesClustering()
   head_clusters_rotation_.clear ();
   head_center_votes_clustered_.resize (clusters_mean.size ());
 
-  for (size_t i = 0; i < clusters_mean.size (); i++)
+  for (std::size_t i = 0; i < clusters_mean.size (); i++)
   {
     if (votes_indices[i].size () > min_votes_size_)
     {
@@ -214,7 +216,7 @@ void pcl::RFFaceDetectorTrainer::faceVotesClustering()
       head_clusters_centers_.push_back (pos); //clusters_mean[i]
       head_clusters_rotation_.push_back (rot);
 
-      for (size_t j = 0; j < votes_indices[i].size (); j++)
+      for (std::size_t j = 0; j < votes_indices[i].size (); j++)
       {
         head_center_votes_clustered_[i].push_back (head_center_votes_[votes_indices[i][j]]);
       }
@@ -327,7 +329,7 @@ void pcl::RFFaceDetectorTrainer::detectFaces()
 
     std::vector<float> weights;
     weights.resize (cloud->points.size ());
-    for (size_t i = 0; i < cloud->points.size (); i++)
+    for (std::size_t i = 0; i < cloud->points.size (); i++)
       weights[i] = 0;
 
     int w_size_2 = static_cast<int> (w_size_ / 2);
@@ -416,7 +418,7 @@ void pcl::RFFaceDetectorTrainer::detectFaces()
       face_heat_map_->width = static_cast<unsigned int>(cloud->points.size ());
       face_heat_map_->is_dense = false;
 
-      for (size_t i = 0; i < cloud->points.size (); i++)
+      for (std::size_t i = 0; i < cloud->points.size (); i++)
       {
         face_heat_map_->points[i].getVector4fMap () = cloud->points[i].getVector4fMap ();
         face_heat_map_->points[i].intensity = weights[i];
@@ -472,7 +474,7 @@ void pcl::RFFaceDetectorTrainer::detectFaces()
     pcl::PointCloud<pcl::PointNormal>::Ptr output (new pcl::PointCloud<pcl::PointNormal> ());
 
     pcl::IterativeClosestPoint<pcl::PointNormal, pcl::PointNormal> reg;
-    for (size_t i = 0; i < head_clusters_centers_.size (); i++)
+    for (std::size_t i = 0; i < head_clusters_centers_.size (); i++)
     {
       Eigen::Matrix3f matrixxx;
 
@@ -544,8 +546,8 @@ void pcl::RFFaceDetectorTrainer::detectFaces()
      papazov.verify ();
      papazov.getMask (mask_hv);
 
-     size_t valid=0;
-     for(size_t i=0; i < mask_hv.size(); i++) {
+     std::size_t valid=0;
+     for(std::size_t i=0; i < mask_hv.size(); i++) {
      if (!mask_hv[i])
      continue;
 

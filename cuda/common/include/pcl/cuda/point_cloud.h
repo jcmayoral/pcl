@@ -39,7 +39,7 @@
 
 #include <pcl/cuda/point_types.h>
 #include <pcl/cuda/thrust.h>
-#include <boost/shared_ptr.hpp>
+#include <pcl/memory.h>
 
 namespace pcl
 {
@@ -196,8 +196,8 @@ namespace pcl
         /** \brief True if no points are invalid (e.g., have NaN or Inf values). */
         bool is_dense;
   
-        using Ptr = boost::shared_ptr<PointCloudAOS<Storage> >;
-        using ConstPtr = boost::shared_ptr<const PointCloudAOS<Storage> >;
+        using Ptr = shared_ptr<PointCloudAOS<Storage> >;
+        using ConstPtr = shared_ptr<const PointCloudAOS<Storage> >;
     };
   
     /** @b PointCloudSOA represents a SOA (Struct of Arrays) PointCloud
@@ -239,7 +239,7 @@ namespace pcl
           * \param newsize the new size
           */
         void
-        resize (size_t newsize)
+        resize (std::size_t newsize)
         {
           assert (sane ());
           points_x.resize (newsize);
@@ -277,8 +277,8 @@ namespace pcl
         /** \brief True if no points are invalid (e.g., have NaN or Inf values). */
         bool is_dense;
   
-        using Ptr = boost::shared_ptr<PointCloudSOA<Storage> >;
-        using ConstPtr = boost::shared_ptr<const PointCloudSOA<Storage> >;
+        using Ptr = shared_ptr<PointCloudSOA<Storage> >;
+        using ConstPtr = shared_ptr<const PointCloudSOA<Storage> >;
   
         //////////////////////////////////////////////////////////////////////////////////////
         // Extras. Testing ZIP iterators

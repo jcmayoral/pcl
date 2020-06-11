@@ -59,7 +59,7 @@ pcl::io::depth_sense::DepthSenseGrabberImpl::DepthSenseGrabberImpl (DepthSenseGr
   point_cloud_rgba_signal_ = p_->createSignal<sig_cb_depth_sense_point_cloud_rgba> ();
 }
 
-pcl::io::depth_sense::DepthSenseGrabberImpl::~DepthSenseGrabberImpl () throw ()
+pcl::io::depth_sense::DepthSenseGrabberImpl::~DepthSenseGrabberImpl () noexcept
 {
   stop ();
 
@@ -110,7 +110,7 @@ pcl::io::depth_sense::DepthSenseGrabberImpl::setConfidenceThreshold (int thresho
 }
 
 void
-pcl::io::depth_sense::DepthSenseGrabberImpl::enableTemporalFiltering (DepthSenseGrabber::TemporalFilteringType type, size_t window_size)
+pcl::io::depth_sense::DepthSenseGrabberImpl::enableTemporalFiltering (DepthSenseGrabber::TemporalFilteringType type, std::size_t window_size)
 {
   if (temporal_filtering_type_ != type ||
       (type != DepthSenseGrabber::DepthSense_None && depth_buffer_->size () != window_size))
